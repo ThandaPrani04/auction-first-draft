@@ -1,0 +1,101 @@
+/* JoinRoom.css */
+
+/* Container Styles */
+.joinroom-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  margin: 20px auto;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+  max-width: 400px;
+}
+
+.joinroom-container form {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+/* Label Styles */
+.joinroom-container label {
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: #333;
+}
+
+/* Input Styles */
+.joinroom-container input {
+  padding: 10px;
+  font-size: 1rem;
+  margin-bottom: 20px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: #fff;
+  transition: border-color 0.3s ease;
+}
+
+.joinroom-container input:focus {
+  border-color: #28a745;
+  outline: none;
+}
+
+/* Button Styles */
+.joinroom-container button {
+  padding: 12px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  border: none;
+  border-radius: 4px;
+  background-color: #28a745;
+  color: #fff;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.joinroom-container button:hover {
+  background-color: #218838;
+  box-shadow: 0 0 10px rgba(33, 136, 56, 0.3);
+}
+
+.joinroom-container button:active {
+  background-color: #1e7e34;
+}
+
+/* Paragraph and Link Styles */
+.joinroom-container p {
+  margin-top: 20px;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.joinroom-container a {
+  color: #007bff;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.joinroom-container a:hover {
+  text-decoration: underline;
+  color: #0056b3;
+}
+
+/* Media Queries */
+@media (max-width: 768px) {
+  .joinroom-container {
+      padding: 15px;
+      margin: 15px;
+      max-width: 90%;
+  }
+
+  .joinroom-container form {
+      width: 100%;
+  }
+
+  .joinroom-container button {
+      padding: 10px;
+      font-size: 0.9rem;
+  }
+}

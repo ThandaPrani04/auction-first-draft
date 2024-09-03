@@ -1,0 +1,74 @@
+/* Home.css */
+
+/* Container Styles */
+.home-container {
+  text-align: center;
+  margin: 40px auto;
+  padding: 20px;
+  max-width: 600px;
+  background-color: #f9f9f9;
+  border-radius: 10px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Heading Styles */
+.home-container h1 {
+  font-size: 2.5rem;
+  color: #333;
+  margin-bottom: 20px;
+  font-weight: bold;
+}
+
+/* Button Styles */
+.home-container button {
+  margin: 15px;
+  padding: 12px 25px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  border: none;
+  border-radius: 6px;
+  background-color: #007bff;
+  color: white;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.home-container button:hover {
+  background-color: #0056b3;
+  transform: translateY(-3px);
+}
+
+.home-container button:active {
+  background-color: #004494;
+  transform: translateY(0);
+}
+
+/* Link Styles */
+.home-container a {
+  text-decoration: none;
+  color: #007bff;
+  font-weight: bold;
+  transition: color 0.3s ease;
+}
+
+.home-container a:hover {
+  color: #0056b3;
+  text-decoration: underline;
+}
+
+/* Media Queries */
+@media (max-width: 768px) {
+  .home-container {
+      margin: 20px;
+      padding: 15px;
+  }
+
+  .home-container h1 {
+      font-size: 2rem;
+  }
+
+  .home-container button {
+      margin: 10px;
+      padding: 10px 20px;
+      font-size: 1rem;
+  }
+}
