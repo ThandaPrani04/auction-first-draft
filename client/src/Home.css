@@ -1,0 +1,178 @@
+/* Home.css */
+
+/* Container Styles */
+.home-container {
+  text-align: center;
+  margin: 0 auto;
+  padding: 40px 20px;
+  max-width: 1200px;
+  background-color: #f9f9f9;
+  border-radius: 10px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Heading Styles */
+.home-container h1 {
+  font-size: 2.5rem;
+  color: #333;
+  margin-bottom: 20px;
+  font-weight: bold;
+}
+
+/* Button Styles */
+.home-container button {
+  margin: 15px;
+  padding: 12px 25px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  border: none;
+  border-radius: 6px;
+  background-color: #007bff;
+  color: white;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.home-container button:hover {
+  background-color: #0056b3;
+  transform: translateY(-3px);
+}
+
+.home-container button:active {
+  background-color: #004494;
+  transform: translateY(0);
+}
+
+/* Link Styles */
+.home-container a {
+  text-decoration: none;
+  color: #007bff;
+  font-weight: bold;
+  transition: color 0.3s ease;
+}
+
+.home-container a:hover {
+  color: #0056b3;
+  text-decoration: underline;
+}
+
+.hero-section {
+  text-align: center;
+  margin-bottom: 60px;
+}
+
+.hero-section h1 {
+  font-size: 3.5rem;
+  color: #2c3e50;
+  margin-bottom: 20px;
+  font-weight: bold;
+}
+
+.subtitle {
+  font-size: 1.5rem;
+  color: #666;
+  margin-bottom: 40px;
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+.create-btn,
+.join-btn {
+  padding: 15px 40px;
+  font-size: 1.2rem;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: bold;
+}
+
+.create-btn {
+  background: #3498db;
+  color: white;
+}
+
+.create-btn:hover {
+  background: #2980b9;
+  transform: translateY(-2px);
+}
+
+.join-btn {
+  background: #2ecc71;
+  color: white;
+}
+
+.join-btn:hover {
+  background: #27ae60;
+  transform: translateY(-2px);
+}
+
+.features {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 30px;
+  margin-top: 60px;
+}
+
+.feature-card {
+  background: white;
+  padding: 30px;
+  border-radius: 10px;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-10px);
+}
+
+.feature-card h3 {
+  font-size: 1.5rem;
+  color: #2c3e50;
+  margin-bottom: 15px;
+}
+
+.feature-card p {
+  color: #666;
+  line-height: 1.6;
+}
+
+/* Media Queries */
+@media (max-width: 768px) {
+  .home-container {
+      margin: 20px;
+      padding: 15px;
+  }
+
+  .home-container h1 {
+      font-size: 2rem;
+  }
+
+  .home-container button {
+      margin: 10px;
+      padding: 10px 20px;
+      font-size: 1rem;
+  }
+
+  .hero-section h1 {
+    font-size: 2.5rem;
+  }
+
+  .features {
+    grid-template-columns: 1fr;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+  }
+
+  .create-btn,
+  .join-btn {
+    width: 100%;
+    margin: 5px 0;
+  }
+}
