@@ -11,10 +11,7 @@ const mongoUri = process.env.MONGO_URI;
 // const password = process.env.MONGO_PASSWORD;
 const front=process.env.CLIENT;
 const port = process.env.PORT || 3000;
-mongoose.connect(mongoUri, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
+mongoose.connect(mongoUri);
 const db = mongoose.connection;
 db.on('error', console.error.bind(console, 'MongoDB connection error:'));
 
@@ -534,7 +531,9 @@ io.on("connection", (socket) => {
     })
 })
 
-
+server.listen(port,() => {
+    console.log("Server running!");
+});
 
 function shuffleArray(array) {
     for (let i = array.length - 1; i > 0; i--) {

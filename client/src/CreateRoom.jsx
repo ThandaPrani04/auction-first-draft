@@ -2,9 +2,8 @@ import Cookies from 'js-cookie';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './CreateRoom.css';
-import dotenv from 'dotenv';
-dotenv.config();
-const URL=process.env.SERVER;
+
+const URL="http://localhost:3000";
 const CreateRoom = () => {
     const [name, setName] = useState('');
     const [error, setError] = useState('');

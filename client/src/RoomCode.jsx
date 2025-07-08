@@ -2,9 +2,8 @@ import Cookies from 'js-cookie';
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import './RoomCode.css'; // Import the CSS file
-import dotenv from 'dotenv';
-dotenv.config();
-const URL=process.env.SERVER;
+
+const URL="http://localhost:3000";
 const RoomCode = () => {
     const [roomCode, setRoomCode] = useState('');
     const [error, setError] = useState('');

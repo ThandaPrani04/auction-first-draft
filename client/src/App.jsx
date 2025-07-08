@@ -5,9 +5,8 @@ import Cookies from 'js-cookie';
 import { useNavigate } from 'react-router-dom';
 import './App.css'; // Import the CSS file
 import createSocket from './socket';
-import dotenv from 'dotenv';
-dotenv.config();
-const URL=process.env.SERVER;
+
+const URL="http://localhost:3000";
 const App = () => {
 
   const [timer, setTimer] = useState(10);

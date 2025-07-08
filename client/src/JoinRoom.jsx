@@ -2,9 +2,8 @@ import Cookies from 'js-cookie';
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import './JoinRoom.css'; // Import the CSS file
-import dotenv from 'dotenv';
-dotenv.config();
-const URL=process.env.SERVER;
+
+const URL="http://localhost:3000";
 const JoinRoom = () => {
     const [name, setName] = useState('');
     const [roomCode, setRoomCode] = useState('');
