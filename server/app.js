@@ -11,7 +11,10 @@ const mongoUri = process.env.MONGO_URI;
 // const password = process.env.MONGO_PASSWORD;
 const front=process.env.CLIENT;
 const port = process.env.PORT || 3000;
-mongoose.connect(mongoUri);
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
 const db = mongoose.connection;
 db.on('error', console.error.bind(console, 'MongoDB connection error:'));
 
