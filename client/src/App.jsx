@@ -5,7 +5,9 @@ import Cookies from 'js-cookie';
 import { useNavigate } from 'react-router-dom';
 import './App.css'; // Import the CSS file
 import createSocket from './socket';
-
+import dotenv from 'dotenv';
+dotenv.config();
+const URL=process.env.SERVER;
 const App = () => {
 
   const [timer, setTimer] = useState(10);
@@ -185,12 +187,12 @@ const App = () => {
   useEffect(()=>{
     if (!roomcode) return;
     
-    fetch('http://localhost:3000/players')
+    fetch(`${URL}/players`)
       .then(response => response.json())
       .then(data => setPlayersInfo(data))
       .catch(error => console.error('Error fetching players info:', error)); 
     
-    fetch(`http://localhost:3000/shuffledplayers/${roomcode}`, {
+    fetch(`${URL}/shuffledplayers/${roomcode}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

@@ -2,7 +2,9 @@ import Cookies from 'js-cookie';
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import './JoinRoom.css'; // Import the CSS file
-
+import dotenv from 'dotenv';
+dotenv.config();
+const URL=process.env.SERVER;
 const JoinRoom = () => {
     const [name, setName] = useState('');
     const [roomCode, setRoomCode] = useState('');
@@ -37,7 +39,7 @@ const JoinRoom = () => {
       
       try {
         // Verify room exists before joining
-        const response = await fetch(`http://localhost:3000/check-room/${roomCode}`, {
+        const response = await fetch(`${URL}/check-room/${roomCode}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json'

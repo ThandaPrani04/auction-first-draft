@@ -4,9 +4,14 @@ import {createServer} from "http";
 import cors from "cors"
 import mongoose from "mongoose";
 import bodyParser from "body-parser";
-
-const port=3000;
-mongoose.connect("mongodb://localhost:27017/Auction", {
+import dotenv from 'dotenv';
+dotenv.config();
+const mongoUri = process.env.MONGO_URI;
+// const username = process.env.MONGO_USERNAME;
+// const password = process.env.MONGO_PASSWORD;
+const front=process.env.CLIENT;
+const port = process.env.PORT || 3000;
+mongoose.connect(mongoUri, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
@@ -17,7 +22,7 @@ const app=express();
 const server = createServer(app);
 const io = new Server(server, {
     cors: {
-      origin: "http://localhost:5173",
+      origin:front,
       methods: ["GET", "POST"],
       credentials: true,
     },
@@ -25,7 +30,7 @@ const io = new Server(server, {
   
 app.use(
     cors({
-      origin: "http://localhost:5173",
+      origin:front,
       methods: ["GET", "POST"],
       credentials: true,
     })
@@ -529,9 +534,7 @@ io.on("connection", (socket) => {
     })
 })
 
-server.listen(port,() => {
-    console.log("Server running!");
-});
+
 
 function shuffleArray(array) {
     for (let i = array.length - 1; i > 0; i--) {

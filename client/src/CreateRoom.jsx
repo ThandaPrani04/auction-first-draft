@@ -2,7 +2,9 @@ import Cookies from 'js-cookie';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './CreateRoom.css';
-
+import dotenv from 'dotenv';
+dotenv.config();
+const URL=process.env.SERVER;
 const CreateRoom = () => {
     const [name, setName] = useState('');
     const [error, setError] = useState('');
@@ -36,7 +38,7 @@ const CreateRoom = () => {
         const roomcode = generateRoomCode();
         console.log('Generated room code:', roomcode);
 
-        const response = await fetch('http://localhost:3000/roomcode', {
+        const response = await fetch(`${URL}/roomcode`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'

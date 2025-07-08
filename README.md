@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Cricket League Auction - Real-time Multiplayer Auction Platform
 
 ## Overview
@@ -80,3 +81,9 @@ The application follows a client-server architecture with real-time communicatio
 ## Acknowledgments
 
 Inspired by the Indian Premier League (IPL) auction format and built using React with Vite.
+=======
+# IPL Auction Website
+Socket.io and React used
+This is not the final product. Currently working on it. Just need to fine tune some things and improve the CSS. 
+But the game works fine for now. 
+>>>>>>> d2e8fea1aa64bbdf2804e7a75d9b8a25f6ff83a4
