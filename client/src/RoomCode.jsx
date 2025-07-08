@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import './RoomCode.css'; // Import the CSS file
 
-const URL="http://localhost:3000";
+const URL="https://auction-first-draft.onrender.com";
 const RoomCode = () => {
     const [roomCode, setRoomCode] = useState('');
     const [error, setError] = useState('');

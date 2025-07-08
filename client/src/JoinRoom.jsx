@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import './JoinRoom.css'; // Import the CSS file
 
-const URL="http://localhost:3000";
+const URL="https://auction-first-draft.onrender.com";
 const JoinRoom = () => {
     const [name, setName] = useState('');
     const [roomCode, setRoomCode] = useState('');

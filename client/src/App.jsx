@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import './App.css'; // Import the CSS file
 import createSocket from './socket';
 
-const URL="http://localhost:3000";
+const URL="https://auction-first-draft.onrender.com";
 const App = () => {
 
   const [timer, setTimer] = useState(10);

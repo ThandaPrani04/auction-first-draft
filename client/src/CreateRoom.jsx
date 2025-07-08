@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './CreateRoom.css';
 
-const URL="http://localhost:3000";
+const URL="https://auction-first-draft.onrender.com";
 const CreateRoom = () => {
     const [name, setName] = useState('');
     const [error, setError] = useState('');
