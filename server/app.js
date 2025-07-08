@@ -530,6 +530,7 @@ io.on("connection", (socket) => {
         }
     })
 })
+console.log(`Frontend origin allowed: ${front}`);
 
 server.listen(port,() => {
     console.log("Server running!");
