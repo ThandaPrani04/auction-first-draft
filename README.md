@@ -73,14 +73,10 @@ The application follows a client-server architecture with real-time communicatio
 
 - Advanced user authentication with passwords
 - Player statistics and performance metrics
-- Team balancing rules and constraints
-- Auction history and replay
 - Customizable auction rules and settings
 - Player images and rich media content
+- Customizable player pool
 
-## Acknowledgments
-
-Inspired by the Indian Premier League (IPL) auction format and built using React with Vite.
 =======
 # IPL Auction Website
 Socket.io and React used
