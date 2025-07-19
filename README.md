@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 # Cricket League Auction - Real-time Multiplayer Auction Platform
 
 ## Overview
