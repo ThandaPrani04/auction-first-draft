@@ -8,7 +8,8 @@
     "start": "node app.js",
     "seed": "node scripts/seed.js",
     "race-test": "node scripts/raceTest.js",
-    "flow-test": "node scripts/flowTest.js"
+    "flow-test": "node scripts/flowTest.js",
+    "full-test": "node scripts/fullAuctionTest.js"
   },
   "keywords": [],
   "author": "",

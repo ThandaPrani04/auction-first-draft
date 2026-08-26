@@ -24,8 +24,12 @@ export const env = {
 
 /** Auction rules, in one place so the demo is easy to retune. */
 export const RULES = {
-  /** How long a lot stays open with no bid, and the reset after each bid. */
-  lotDurationMs: 10_000,
+  /**
+   * How long a lot stays open with no bid, and the reset after each bid.
+   * Overridable so the full-auction test can run 40 lots in seconds rather
+   * than seven minutes.
+   */
+  lotDurationMs: Number(process.env.LOT_DURATION_MS) || 10_000,
   /** Countdown shown between a settlement and the next lot opening. */
   settlementPauseMs: 3_000,
   /** Starting purse, in lakhs. 12000 = 120 Cr. */
