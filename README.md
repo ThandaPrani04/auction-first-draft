@@ -1,4 +1,3 @@
-
 # Cricket League Auction - Real-time Multiplayer Auction Platform
 
 ## Overview
@@ -75,4 +74,7 @@ The application follows a client-server architecture with real-time communicatio
 - Player statistics and performance metrics
 - Customizable auction rules and settings
 - Player images and rich media content
-- Customizable player pool
+
+## Acknowledgments
+
+Inspired by the Indian Premier League (IPL) auction format and built using React with Vite.
