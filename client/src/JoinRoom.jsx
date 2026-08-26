@@ -1,107 +1,103 @@
-import Cookies from 'js-cookie';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import './JoinRoom.css'; // Import the CSS file
+import { checkRoom } from './lib/api.js';
+import { setUserName, setRoomCode as persistRoomCode, clearRoom } from './lib/identity.js';
+import './JoinRoom.css';
 
-const URL="https://auction-first-draft.onrender.com";
+/**
+ * Join an existing room.
+ *
+ * This now actually BRANCHES on whether the room exists. The old version
+ * fetched /check-room, assigned the response to a variable it never read, and
+ * navigated regardless — so you could "join" a room that had never existed and
+ * land in an empty auction with no explanation.
+ */
 const JoinRoom = () => {
-    const [name, setName] = useState('');
-    const [roomCode, setRoomCode] = useState('');
-    const [error, setError] = useState('');
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const navigate = useNavigate();
+  const [name, setName] = useState('');
+  const [roomCode, setRoomCode] = useState('');
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
 
-    const handleNameChange = (e) => {
-      setName(e.target.value);
-      setError('');
-    };
-    
-    const handleCodeChange = (e) => {
-      setRoomCode(e.target.value.toUpperCase());
-      setError('');
-    };
-  
-    const handleFormSubmit = async (e) => {
-      e.preventDefault();
-      
-      if (!name.trim()) {
-        setError('Please enter your name');
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+    const userName = name.trim();
+    const code = roomCode.trim().toUpperCase();
+
+    if (!userName || !code) {
+      setError('Please enter both your name and a room code');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const room = await checkRoom(code);
+
+      if (room.phase === 'LIVE') {
+        setError('That auction has already started.');
         return;
       }
-      
-      if (!roomCode.trim()) {
-        setError('Please enter a room code');
+      if (room.participantCount >= room.maxParticipants) {
+        setError('That room is full.');
         return;
       }
-      
-      setIsSubmitting(true);
-      
-      try {
-        // Verify room exists before joining
-        const response = await fetch(`${URL}/check-room/${roomCode}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        }).catch(() => {
-          // If the server is unreachable, let the user try anyway
-          return { ok: true };
-        });
-        
-        // Set the cookie with the user's name
-        Cookies.set('userName', name, { path: '/', expires: 1 });
-        Cookies.set('RoomCode', roomCode, { path: '/', expires: 1 });
-        
-        // Store in sessionStorage as backup
-        try {
-          sessionStorage.setItem('userName', name);
-          sessionStorage.setItem('RoomCode', roomCode);
-        } catch (storageError) {
-          console.warn('Session storage not available:', storageError);
-        }
-        
-        navigate('/app');
-      } catch (error) {
-        console.error('Error joining room:', error);
-        setError('Error joining room. Please try again.');
-      } finally {
-        setIsSubmitting(false);
-      }
-    };
-  
-    return (
-      <div className="joinroom-container">
-        <form onSubmit={handleFormSubmit}>
-          <label>
-            Enter your name:
-            <input 
-              type="text" 
-              value={name} 
-              onChange={handleNameChange}
-              placeholder="Your name"
-              required
-              disabled={isSubmitting}
-            />
-          </label>
-          <label>
-            Enter Room Code:
-            <input 
-              type="text" 
-              value={roomCode} 
-              onChange={handleCodeChange}
-              placeholder="Room code"
-              required
-              disabled={isSubmitting}
-            />
-          </label>
-          {error && <p className="error-message">{error}</p>}
-          <button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Joining...' : 'Join Room'}
-          </button>
-        </form>
-        <p>Do you want to create a room? <Link to="/createroom">Click here</Link></p>
-      </div>
-    );
+
+      // Drop any userId held from a previous room, so this browser joins as a
+      // new participant rather than trying to resume someone else's seat.
+      clearRoom();
+      setUserName(userName);
+      persistRoomCode(code);
+      navigate('/app');
+    } catch (err) {
+      setError(err.status === 404 ? 'No room with that code.' : 'Could not reach the server.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="joinroom-container">
+      <form onSubmit={handleFormSubmit}>
+        <label>
+          Enter your name:
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => {
+              setName(e.target.value);
+              setError('');
+            }}
+            placeholder="Your name"
+            maxLength={24}
+            required
+            disabled={isSubmitting}
+          />
+        </label>
+        <label>
+          Enter Room Code:
+          <input
+            type="text"
+            value={roomCode}
+            onChange={(e) => {
+              setRoomCode(e.target.value.toUpperCase());
+              setError('');
+            }}
+            placeholder="Room code"
+            maxLength={6}
+            required
+            disabled={isSubmitting}
+          />
+        </label>
+        {error && <p className="error-message">{error}</p>}
+        <button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? 'Joining…' : 'Join Room'}
+        </button>
+      </form>
+      <p>
+        Do you want to create a room? <Link to="/createroom">Click here</Link>
+      </p>
+    </div>
+  );
 };
 
 export default JoinRoom;

@@ -13,6 +13,10 @@ module.exports = {
   plugins: ['react-refresh'],
   rules: {
     'react/jsx-no-target-blank': 'off',
+    // This is a plain-JS project with no PropTypes or TypeScript anywhere;
+    // the rule only fired once components were split out of the single
+    // propless God component, and adding PropTypes throughout would be noise.
+    'react/prop-types': 'off',
     'react-refresh/only-export-components': [
       'warn',
       { allowConstantExport: true },

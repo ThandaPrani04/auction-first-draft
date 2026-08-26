@@ -42,13 +42,8 @@ export function openLot(io, room, index) {
 
   scheduleSettle(io, room);
 
-  // A lot opening while someone is missing would immediately be paused by the
-  // disconnect policy, so check up front rather than starting and stopping.
-  if (!room.allConnected()) {
-    pause(io, room, 'PARTICIPANT_DISCONNECTED');
-    return { ok: true };
-  }
-
+  // Announce the lot BEFORE any pause, so clients always know which player is
+  // up even if the room freezes the instant it opens.
   const version = room.bump();
   io.to(room.roomCode).emit('auction:lot', {
     version,
@@ -60,6 +55,11 @@ export function openLot(io, room, index) {
     endsAt: room.lot.endsAt,
     status: 'RUNNING',
   });
+
+  // A lot opening while someone is missing is immediately frozen by the
+  // disconnect policy.
+  if (!room.allConnected()) pause(io, room, 'PARTICIPANT_DISCONNECTED');
+
   return { ok: true };
 }
 
