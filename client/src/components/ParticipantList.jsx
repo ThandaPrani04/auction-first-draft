@@ -22,8 +22,9 @@ export default function ParticipantList({ participants, me, isAdmin, maxParticip
               {p.name}
               {p.isAdmin && <span className="badge badge--admin">HOST</span>}
               {p.userId === me?.userId && <span className="badge">YOU</span>}
-              {!p.connected && !p.abandoned && <span className="badge badge--offline">OFFLINE</span>}
-              {p.abandoned && <span className="badge badge--offline">DROPPED</span>}
+              {!p.connected && p.status === 'ACTIVE' && (
+                <span className="badge badge--offline">OFFLINE</span>
+              )}
             </span>
             <span className="user-purse">
               {formatCr(p.purse)} · {p.teamSize} {p.teamSize === 1 ? 'player' : 'players'}

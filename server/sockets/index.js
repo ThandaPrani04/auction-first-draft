@@ -41,8 +41,13 @@ export function registerSocketHandlers(io) {
         const room = await registry.load(code);
         if (!room) return respond(ack, { ok: false, code: 'ROOM_NOT_FOUND' });
 
+        // A kick that a page refresh undoes is not a kick.
+        if (userId && room.isKicked(userId)) {
+          return respond(ack, { ok: false, code: 'KICKED' });
+        }
+
         const existing = userId && room.participants.get(userId);
-        if (!existing && room.participants.size >= room.maxParticipants) {
+        if (!existing && room.activeParticipants().length >= room.maxParticipants) {
           return respond(ack, { ok: false, code: 'ROOM_FULL' });
         }
         if (!existing && room.phase === 'LIVE') {
@@ -52,6 +57,7 @@ export function registerSocketHandlers(io) {
         const id = userId || randomUUID();
         const participant = room.addParticipant(id, userName || 'Anonymous');
         participant.socketId = socket.id;
+        registry.cancelEviction(code);
 
         socket.data.userId = id;
         socket.data.roomCode = code;
@@ -109,18 +115,21 @@ export function registerSocketHandlers(io) {
      * Unpause. `dropUserIds` is the escape hatch for the hard-pause policy:
      * without it, one person closing their laptop deadlocks the room forever.
      */
-    socket.on('auction:resume', ({ dropUserIds = [] } = {}, ack) => {
+    socket.on('auction:resume', async ({ dropUserIds = [] } = {}, ack) => {
       const room = requireAdmin(socket, ack);
       if (!room) return;
 
       for (const id of dropUserIds) {
         const p = room.participants.get(id);
-        if (p && !p.connected) p.abandoned = true;
+        if (p && !p.connected && p.status === 'ACTIVE') {
+          p.status = 'ABANDONED';
+          await setParticipantStatus(room.roomCode, id, 'ABANDONED');
+        }
       }
       respond(ack, resume(io, room));
     });
 
-    socket.on('room:kick', ({ targetUserId } = {}, ack) => {
+    socket.on('room:kick', async ({ targetUserId } = {}, ack) => {
       const room = requireAdmin(socket, ack);
       if (!room) return;
       if (targetUserId === socket.data.userId) {
@@ -128,7 +137,9 @@ export function registerSocketHandlers(io) {
       }
 
       const target = room.participants.get(targetUserId);
-      if (!target) return respond(ack, { ok: false, code: 'NO_SUCH_PARTICIPANT' });
+      if (!target || target.status === 'KICKED') {
+        return respond(ack, { ok: false, code: 'NO_SUCH_PARTICIPANT' });
+      }
 
       // If they hold the standing bid, withdraw it so the lot is not sold to
       // someone who is no longer in the room.
@@ -137,12 +148,28 @@ export function registerSocketHandlers(io) {
         room.lot.highestBidderId = null;
       }
 
-      room.participants.delete(targetUserId);
+      // Marked, not deleted: the seat is freed and they cannot come back, but
+      // the record survives so anything they already won still reconciles in
+      // the results. Deleting them left the live room and the durable document
+      // disagreeing about who had ever been present.
+      target.status = 'KICKED';
+      target.connected = false;
+      const kickedSocketId = target.socketId;
+      target.socketId = null;
       const version = room.bump();
 
-      if (target.socketId) {
-        io.to(target.socketId).emit('room:kicked');
-        io.sockets.sockets.get(target.socketId)?.leave(room.roomCode);
+      await setParticipantStatus(room.roomCode, targetUserId, 'KICKED');
+
+      if (kickedSocketId) {
+        const kickedSocket = io.sockets.sockets.get(kickedSocketId);
+        io.to(kickedSocketId).emit('room:kicked');
+        if (kickedSocket) {
+          kickedSocket.leave(room.roomCode);
+          // Detach the socket entirely, so nothing it sends afterwards still
+          // resolves to this room.
+          kickedSocket.data.roomCode = null;
+          kickedSocket.data.userId = null;
+        }
       }
       io.to(room.roomCode).emit('room:participants', {
         version,
@@ -178,9 +205,12 @@ export function registerSocketHandlers(io) {
       }
 
       // Reclaim the room once it is empty — the old roomState leaked every
-      // slice of every room it had ever seen, permanently.
-      if (![...room.participants.values()].some((p) => p.connected)) {
-        registry.remove(room.roomCode);
+      // slice of every room it had ever seen, permanently. But do it on a
+      // grace timer: under the hard-pause policy an all-disconnect is routine
+      // (everyone refreshing at once), and evicting immediately threw away the
+      // live auction and reset the room to its lobby.
+      if (!room.hasLiveConnection()) {
+        registry.scheduleEviction(room.roomCode);
       }
     });
   });
@@ -210,9 +240,16 @@ function respond(ack, payload) {
   if (typeof ack === 'function') ack(payload);
 }
 
-/** Add a participant to the durable room document if they are new. */
+/**
+ * Add a participant to the durable room document if they are new, or restore
+ * them to ACTIVE if they are a returning ABANDONED player.
+ *
+ * Both halves matter: without the first the document under-counts, without the
+ * second a player the admin dropped stays marked dropped forever after they
+ * come back.
+ */
 async function persistParticipant(room, participant) {
-  const res = await RoomDoc.updateOne(
+  const added = await RoomDoc.updateOne(
     { roomCode: room.roomCode, 'participants.userId': { $ne: participant.userId } },
     {
       $push: {
@@ -221,11 +258,26 @@ async function persistParticipant(room, participant) {
           name: participant.name,
           purse: participant.purse,
           team: [],
+          status: 'ACTIVE',
         },
       },
     }
   );
-  return res;
+  if (added.modifiedCount === 0) {
+    await setParticipantStatus(room.roomCode, participant.userId, participant.status);
+  }
+}
+
+/** Mirror a participant's lifecycle status into the durable document. */
+async function setParticipantStatus(roomCode, userId, status) {
+  try {
+    await RoomDoc.updateOne(
+      { roomCode, 'participants.userId': userId },
+      { $set: { 'participants.$.status': status } }
+    );
+  } catch (err) {
+    console.error('[socket] could not persist participant status:', err.message);
+  }
 }
 
 export { buildResults };

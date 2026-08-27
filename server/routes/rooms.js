@@ -97,11 +97,17 @@ roomsRouter.get('/rooms/:code', async (req, res) => {
   if (!doc) return res.status(404).json({ exists: false, error: 'Room not found' });
 
   const live = registry.get(code);
+  // Count only people who still hold a seat. Counting every record ever
+  // written made this disagree with the live room after a kick.
+  const participantCount = live
+    ? live.activeParticipants().length
+    : (doc.participants ?? []).filter((p) => (p.status ?? 'ACTIVE') === 'ACTIVE').length;
+
   res.json({
     exists: true,
     roomCode: code,
     phase: live?.phase ?? doc.phase,
-    participantCount: live ? live.participants.size : (doc.participants?.length ?? 0),
+    participantCount,
     maxParticipants: doc.maxParticipants,
     totalPlayers: doc.playerIds.length,
   });
@@ -116,17 +122,22 @@ roomsRouter.get('/rooms/:code/results', async (req, res) => {
   const players = await Player.find({ _id: { $in: doc.playerIds } }).lean();
   const byId = new Map(players.map((p) => [String(p._id), p]));
 
-  const teams = (doc.participants ?? []).map((p) => ({
-    userId: p.userId,
-    name: p.name,
-    purse: p.purse,
-    spent: doc.startingPurse - p.purse,
-    players: (p.team ?? []).map((t) => ({
-      ...byId.get(String(t.playerId)),
-      _id: String(t.playerId),
-      price: t.price,
-    })),
-  }));
+  // Mirrors buildResults: removed managers appear only if they bought someone,
+  // so the sold-player count still adds up.
+  const teams = (doc.participants ?? [])
+    .filter((p) => (p.status ?? 'ACTIVE') === 'ACTIVE' || (p.team ?? []).length > 0)
+    .map((p) => ({
+      userId: p.userId,
+      name: p.name,
+      purse: p.purse,
+      spent: doc.startingPurse - p.purse,
+      removed: (p.status ?? 'ACTIVE') !== 'ACTIVE',
+      players: (p.team ?? []).map((t) => ({
+        ...byId.get(String(t.playerId)),
+        _id: String(t.playerId),
+        price: t.price,
+      })),
+    }));
 
   const unsold = (doc.lots ?? [])
     .filter((l) => l.status === 'UNSOLD')

@@ -9,7 +9,8 @@
     "seed": "node scripts/seed.js",
     "race-test": "node scripts/raceTest.js",
     "flow-test": "node scripts/flowTest.js",
-    "full-test": "node scripts/fullAuctionTest.js"
+    "full-test": "node scripts/fullAuctionTest.js",
+    "consistency-test": "node scripts/consistencyTest.js"
   },
   "keywords": [],
   "author": "",

@@ -198,30 +198,43 @@ export function resume(io, room) {
   return { ok: true };
 }
 
+/**
+ * Only ACTIVE participants are broadcast. A kicked or dropped player keeps a
+ * record server-side so the results still reconcile, but they no longer appear
+ * in the room.
+ */
 export function participantsPayload(room) {
-  return [...room.participants.values()].map((p) => ({
+  return room.activeParticipants().map((p) => ({
     userId: p.userId,
     name: p.name,
     purse: p.purse,
     teamSize: p.team.length,
     connected: p.connected,
-    abandoned: p.abandoned,
+    status: p.status,
     isAdmin: room.isAdmin(p.userId),
   }));
 }
 
 export function buildResults(room) {
-  return {
-    teams: [...room.participants.values()].map((p) => ({
+  // Removed managers are listed only if they actually bought someone —
+  // otherwise a kicked player's squad would vanish and the sold-player count
+  // would no longer add up.
+  const teams = [...room.participants.values()]
+    .filter((p) => p.status === 'ACTIVE' || p.team.length > 0)
+    .map((p) => ({
       userId: p.userId,
       name: p.name,
       purse: p.purse,
       spent: room.startingPurse - p.purse,
+      removed: p.status !== 'ACTIVE',
       players: p.team.map((t) => {
         const player = room.players.find((pl) => String(pl._id) === String(t.playerId));
         return { ...publicPlayer(player), price: t.price };
       }),
-    })),
+    }));
+
+  return {
+    teams,
     unsold: room.settled.filter((s) => s.status === 'UNSOLD').map((s) => s.player),
     sold: room.settled.filter((s) => s.status === 'SOLD'),
   };

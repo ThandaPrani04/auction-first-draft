@@ -11,7 +11,7 @@
 export default function PausedOverlay({ waitingFor, isAdmin, participants, onResume }) {
   if (!waitingFor?.length) return null;
 
-  const missing = participants.filter((p) => !p.connected && !p.abandoned);
+  const missing = participants.filter((p) => !p.connected && p.status === 'ACTIVE');
 
   return (
     <div className="paused-overlay">

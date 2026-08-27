@@ -54,8 +54,8 @@ class LiveRoom {
     /** Settled lots, kept for the results screen. */
     this.settled = [];
 
-    /** Timeout that opens the next lot after a settlement. */
-    this.advanceTimer = null;
+    /** Set while the room is empty and counting down to being reclaimed. */
+    this.evictionTimer = null;
   }
 
   bump() {
@@ -75,8 +75,10 @@ class LiveRoom {
     if (p) {
       // Reconnect: rebind, keep purse and team. This is the fix for the old
       // socket.id-keyed state that handed out a fresh 120 Cr on every refresh.
+      // A previously ABANDONED player coming back is welcome again; a KICKED
+      // one is refused before we ever get here.
       p.connected = true;
-      p.abandoned = false;
+      p.status = 'ACTIVE';
       p.name = name || p.name;
       return p;
     }
@@ -86,20 +88,34 @@ class LiveRoom {
       purse: this.startingPurse,
       team: [],
       connected: true,
-      abandoned: false,
+      status: 'ACTIVE',
       socketId: null,
     };
     this.participants.set(userId, p);
     return p;
   }
 
+  /** Everyone currently holding a seat. */
+  activeParticipants() {
+    return [...this.participants.values()].filter((p) => p.status === 'ACTIVE');
+  }
+
+  isKicked(userId) {
+    return this.participants.get(userId)?.status === 'KICKED';
+  }
+
   /** Participants who must be back before a paused auction may resume. */
   missingParticipants() {
-    return [...this.participants.values()].filter((p) => !p.connected && !p.abandoned);
+    return this.activeParticipants().filter((p) => !p.connected);
   }
 
   allConnected() {
     return this.missingParticipants().length === 0;
+  }
+
+  /** Whether anyone at all is currently on a socket. */
+  hasLiveConnection() {
+    return [...this.participants.values()].some((p) => p.connected);
   }
 
   isAdmin(userId) {
@@ -133,7 +149,9 @@ class LiveRoom {
             endsAt: this.lot.endsAt,
           }
         : null,
-      participants: [...this.participants.values()].map(publicParticipant(this)),
+      // Active only — a kicked or dropped player keeps a record server-side
+      // for the results, but must not reappear in anyone's room list.
+      participants: this.activeParticipants().map(publicParticipant(this)),
       me: me
         ? { userId: me.userId, name: me.name, purse: me.purse, team: me.team }
         : null,
@@ -162,7 +180,7 @@ const publicParticipant = (room) => (p) => ({
   purse: p.purse,
   teamSize: p.team.length,
   connected: p.connected,
-  abandoned: p.abandoned,
+  status: p.status,
   isAdmin: room.isAdmin(p.userId),
 });
 
@@ -213,8 +231,36 @@ export function get(roomCode) {
 export function remove(roomCode) {
   const room = rooms.get(roomCode);
   if (room?.lot?.timer) clearTimeout(room.lot.timer);
-  if (room?.advanceTimer) clearTimeout(room.advanceTimer);
+  if (room?.evictionTimer) clearTimeout(room.evictionTimer);
   rooms.delete(roomCode);
+}
+
+/**
+ * How long an empty room is held in memory before its live state is dropped.
+ *
+ * Under the hard-pause policy a brief all-disconnect is routine — everyone
+ * refreshing at once, or the last two people reloading together. Evicting
+ * immediately threw away the live auction and silently reset the room to its
+ * lobby. The grace period means only a genuinely abandoned room is reclaimed.
+ */
+export const EVICTION_GRACE_MS = Number(process.env.EVICTION_GRACE_MS) || 10 * 60_000;
+
+export function scheduleEviction(roomCode) {
+  const room = rooms.get(roomCode);
+  if (!room || room.evictionTimer) return;
+  room.evictionTimer = setTimeout(() => {
+    const current = rooms.get(roomCode);
+    // Re-check rather than trusting the timer: someone may have rejoined.
+    if (current && !current.hasLiveConnection()) remove(roomCode);
+  }, EVICTION_GRACE_MS);
+}
+
+export function cancelEviction(roomCode) {
+  const room = rooms.get(roomCode);
+  if (room?.evictionTimer) {
+    clearTimeout(room.evictionTimer);
+    room.evictionTimer = null;
+  }
 }
 
 export function makeRoom(opts) {
@@ -256,7 +302,7 @@ export async function load(roomCode) {
       purse: p.purse,
       team: p.team ?? [],
       connected: false,
-      abandoned: p.abandoned ?? false,
+      status: p.status ?? 'ACTIVE',
       socketId: null,
     });
   }

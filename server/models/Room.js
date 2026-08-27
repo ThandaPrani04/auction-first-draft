@@ -21,11 +21,22 @@ const participantSchema = new mongoose.Schema(
       },
     ],
     /**
-     * Set when the admin drops someone who left and did not come back. An
-     * abandoned participant no longer blocks the "everyone is connected"
-     * check that gates resuming a paused auction.
+     * Lifecycle, kept explicitly rather than as a pile of booleans:
+     *   ACTIVE    — in the room and counted
+     *   ABANDONED — left and dropped by the admin so the auction could resume
+     *   KICKED    — removed by the admin
+     *
+     * Non-ACTIVE participants no longer hold a seat and no longer block the
+     * "everyone is connected" check that gates resuming a paused auction, but
+     * their record is KEPT so anything they already won still reconciles in
+     * the results. Deleting them made the live room and this document
+     * disagree about who was ever present.
      */
-    abandoned: { type: Boolean, default: false },
+    status: {
+      type: String,
+      enum: ['ACTIVE', 'ABANDONED', 'KICKED'],
+      default: 'ACTIVE',
+    },
   },
   { _id: false }
 );

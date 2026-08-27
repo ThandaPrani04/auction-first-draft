@@ -93,7 +93,9 @@ function reducer(state, action) {
         version: action.version,
         participants: action.participants,
         me,
-        waitingFor: action.participants.filter((p) => !p.connected && !p.abandoned).map((p) => p.name),
+        waitingFor: action.participants
+          .filter((p) => !p.connected && p.status === 'ACTIVE')
+          .map((p) => p.name),
         needsSync: state.needsSync || ord === 'gap',
       };
     }
