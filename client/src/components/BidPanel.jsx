@@ -1,12 +1,16 @@
 import { formatCr, nextBid } from '../lib/bidRules.js';
 
 /**
- * The BID button and the admin's auction controls.
+ * Controls plus the status line.
  *
- * The button is disabled when you already hold the standing bid — but that is
- * only UX. The server enforces the same rule and rejects the bid outright, so
- * the invariant holds even if the button is bypassed. Client-side validation
- * is a hint; the server check is what makes it true.
+ * Both buttons are always in the DOM and always the same width — disabled
+ * rather than removed, and held with `visibility` for non-admins — so the BID
+ * button never moves. The status line always renders too, falling back to a
+ * non-breaking space, because a message appearing and disappearing was
+ * shifting everything under it.
+ *
+ * Disabling BID when you already hold the top bid is UX only; the server
+ * enforces the same rule and rejects the bid outright.
  */
 export default function BidPanel({ state, actions }) {
   const { phase, lot, player, me, isAdmin, lotIndex, totalLots, notice } = state;
@@ -14,41 +18,47 @@ export default function BidPanel({ state, actions }) {
   const running = lot?.status === 'RUNNING';
   const settled = lot?.status === 'SETTLED';
   const paused = lot?.status === 'PAUSED';
+  const lastLot = lotIndex + 1 >= totalLots;
 
   const amount = player ? nextBid(player.basePrice, lot?.currentBid ?? null) : null;
   const iAmHighest = !!me && lot?.highestBidderId === me.userId;
   const canAfford = amount != null && me != null && amount <= me.purse;
 
-  const disabled = !running || iAmHighest || !canAfford;
+  const adminLabel =
+    phase === 'LOBBY' ? 'Start Auction' : lastLot && settled ? 'Finish Auction' : 'Next Player';
+  const adminDisabled = phase === 'LOBBY' ? false : !settled;
 
-  let reason = null;
-  if (paused) reason = 'Auction paused';
-  else if (settled) reason = isAdmin ? 'Call the next player' : 'Waiting for the room creator';
-  else if (iAmHighest) reason = 'You hold the highest bid';
-  else if (running && !canAfford) reason = 'Not enough purse';
+  let status = ' ';
+  if (paused) status = 'Auction paused';
+  else if (phase === 'LOBBY') status = isAdmin ? 'Start when everyone has joined' : 'Waiting for the host to start';
+  else if (settled) status = isAdmin ? 'Call the next player' : 'Waiting for the host';
+  else if (iAmHighest) status = 'You hold the highest bid';
+  else if (running && !canAfford) status = 'Not enough purse for the next bid';
 
   return (
-    <div className="auction-controls">
-      <div className="bid-controls">
-        {isAdmin && phase === 'LOBBY' && (
-          <button className="start-btn" onClick={actions.startAuction}>
-            Start Auction
-          </button>
-        )}
+    <div className="stage-controls">
+      <div className="controls-row">
+        <button
+          className="btn btn--ghost"
+          onClick={phase === 'LOBBY' ? actions.startAuction : actions.nextPlayer}
+          disabled={adminDisabled}
+          style={{ visibility: isAdmin ? 'visible' : 'hidden' }}
+        >
+          {adminLabel}
+        </button>
 
-        {isAdmin && phase === 'LIVE' && (
-          <button className="start-btn" onClick={actions.nextPlayer} disabled={!settled}>
-            {lotIndex + 1 >= totalLots ? 'Finish Auction' : 'Next Player →'}
-          </button>
-        )}
-
-        <button className="bid-btn" onClick={() => actions.placeBid(lotIndex)} disabled={disabled}>
+        <button
+          className="btn btn--bid"
+          onClick={() => actions.placeBid(lotIndex)}
+          disabled={!running || iAmHighest || !canAfford}
+        >
           {amount != null ? `Bid ${formatCr(amount)}` : 'Place Bid'}
         </button>
       </div>
 
-      {reason && <p className="status-message">{reason}</p>}
-      {notice && <p className={`status-message notice-${notice.kind}`}>{notice.text}</p>}
+      <p className={`status-line${notice ? ` notice-${notice.kind}` : ''}`}>
+        {notice ? notice.text : status}
+      </p>
     </div>
   );
 }

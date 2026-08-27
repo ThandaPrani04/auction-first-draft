@@ -25,6 +25,9 @@ async function request(path, options = {}) {
 
 export const health = () => request('/health');
 
+/** The master catalog in canonical order — the ledger's reference list. */
+export const fetchPlayers = () => request('/players');
+
 export const createRoom = (hostName) =>
   request('/rooms', { method: 'POST', body: JSON.stringify({ hostName }) });
 

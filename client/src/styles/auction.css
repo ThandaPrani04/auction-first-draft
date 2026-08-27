@@ -1,0 +1,594 @@
+/* ==========================================================================
+   Auction room — self-contained layout.
+
+   Two constraints drive everything here:
+
+   1. It must fit a laptop with NO page scroll. The shell is a 100vh grid with
+      overflow hidden; only the three panes scroll, internally.
+   2. Nothing may change size when the auction does. Every region has a fixed
+      or grid-allocated height, every conditional slot renders even when empty,
+      and results are drawn as overlays inside their card rather than as
+      elements that push others around.
+
+   App.css declares `div { display:flex; flex-direction:column; align-items:
+   center; margin:20px }` globally. Rather than deleting it and risking the
+   other pages, the reset below neutralises it inside this subtree at ZERO
+   specificity (:where), so every class rule in this file wins cleanly.
+   ========================================================================== */
+
+:where(.auction-app div),
+:where(.auction-app section),
+:where(.auction-app header),
+:where(.auction-app aside),
+:where(.auction-app main) {
+  display: block;
+  flex-direction: row;
+  align-items: stretch;
+  margin: 0;
+}
+
+.auction-app {
+  --bg: #0f1720;
+  --panel: #17222e;
+  --panel-2: #1e2b3a;
+  --line: #2a3a4d;
+  --text: #e8eef5;
+  --muted: #8ea1b5;
+  --accent: #2ecc71;
+  --accent-dim: #27ae60;
+  --gold: #f1c40f;
+  --danger: #e74c3c;
+  --radius: 10px;
+
+  position: fixed;
+  inset: 0;
+  box-sizing: border-box;
+  padding: 10px;
+  gap: 10px;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, Arial, sans-serif;
+
+  display: grid;
+  grid-template-columns: 288px minmax(0, 1fr) 300px;
+  grid-template-rows: 52px minmax(0, 1fr);
+  grid-template-areas:
+    'top   top   top'
+    'left  stage right';
+  overflow: hidden;
+}
+
+.auction-app *,
+.auction-app *::before,
+.auction-app *::after { box-sizing: border-box; }
+
+.auction-app h1,
+.auction-app h2,
+.auction-app h3,
+.auction-app h4,
+.auction-app p { margin: 0; color: inherit; text-align: left; font-size: inherit; }
+
+/* --- Panels -------------------------------------------------------------- */
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.panel-head {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel-2);
+}
+.panel-head h2 { font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 700; }
+.panel-count {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 1px 8px;
+}
+
+/* The ONLY scrollable regions in the app. */
+.panel-scroll { overflow-y: auto; min-height: 0; scrollbar-width: thin; }
+.panel-scroll::-webkit-scrollbar { width: 8px; }
+.panel-scroll::-webkit-scrollbar-thumb { background: #33455a; border-radius: 4px; }
+
+.panel-empty { padding: 16px 12px; color: var(--muted); font-size: 0.85rem; font-style: italic; }
+.muted { color: var(--muted); }
+
+/* --- Top bar ------------------------------------------------------------- */
+.topbar {
+  grid-area: top;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 14px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.topbar-left, .topbar-mid, .topbar-right {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px;
+}
+.topbar h1 { font-size: 1rem; font-weight: 700; white-space: nowrap; }
+.topbar-room { font-size: 0.8rem; color: var(--muted); }
+.topbar-room code {
+  color: var(--gold);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  background: rgba(241, 196, 15, 0.1);
+  padding: 2px 7px;
+  border-radius: 5px;
+}
+.topbar-progress { font-size: 0.82rem; color: var(--muted); }
+.topbar-user { font-size: 0.85rem; font-weight: 600; }
+.topbar-purse {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--accent);
+  background: rgba(46, 204, 113, 0.12);
+  padding: 3px 10px;
+  border-radius: 6px;
+}
+
+.phase-pill {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  padding: 3px 9px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.09);
+  color: var(--muted);
+}
+.phase-live { background: rgba(46, 204, 113, 0.16); color: var(--accent); }
+
+/* --- Left: player ledger -------------------------------------------------- */
+.ledger {
+  grid-area: left;
+  display: grid !important;
+  grid-template-rows: auto auto minmax(0, 1fr);
+}
+
+.ledger-summary {
+  display: flex !important;
+  justify-content: space-between;
+  padding: 7px 12px;
+  font-size: 0.74rem;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+}
+.ledger-summary b { color: var(--text); font-size: 0.85rem; }
+
+.ledger-set-label {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 4px 12px;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: var(--panel-2);
+  border-bottom: 1px solid var(--line);
+}
+
+.ledger-row {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center !important;
+  gap: 8px;
+  /* Fixed height: rows must not resize as outcomes arrive. */
+  height: 26px;
+  padding: 0 12px;
+  font-size: 0.79rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+.ledger-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ledger-outcome {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px;
+  font-size: 0.71rem;
+  white-space: nowrap;
+  max-width: 130px;
+  overflow: hidden;
+}
+.ledger-outcome b { color: var(--accent); }
+.ledger-outcome em {
+  font-style: normal;
+  color: var(--muted);
+  max-width: 62px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ledger-base { color: #56697e; }
+
+.ledger-row.is-sold .ledger-name,
+.ledger-row.is-unsold .ledger-name { text-decoration: line-through; color: var(--muted); }
+.ledger-row.is-sold { background: rgba(46, 204, 113, 0.05); }
+.ledger-row.is-unsold .ledger-outcome i { color: #7a8ca0; font-style: normal; }
+.ledger-row.is-unsold { opacity: 0.6; }
+
+.ledger-row.is-current {
+  background: rgba(241, 196, 15, 0.12);
+  box-shadow: inset 3px 0 0 var(--gold);
+}
+.ledger-row.is-current .ledger-name { color: var(--gold); font-weight: 700; }
+.ledger-live { color: var(--gold); font-style: normal; font-weight: 600; }
+
+/* --- Centre stage --------------------------------------------------------- */
+.stage {
+  grid-area: stage;
+  display: grid !important;
+  /* Card takes the slack; the strip and controls are fixed, so the controls
+     never move when the card's contents change. */
+  grid-template-rows: minmax(0, 1fr) 46px 92px;
+  gap: 10px;
+  min-height: 0;
+}
+
+.stage-card {
+  position: relative;
+  display: grid !important;
+  grid-template-rows: auto auto 1fr;
+  align-content: center;
+  gap: 18px;
+  padding: 20px 24px;
+  text-align: center;
+}
+.stage-player { text-align: center; }
+.stage-name {
+  font-size: clamp(1.5rem, 3.2vw, 2.4rem) !important;
+  font-weight: 800;
+  line-height: 1.1;
+  text-align: center !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.stage-meta {
+  display: flex !important;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px !important;
+}
+.chip {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--muted);
+}
+.chip--team { background: rgba(52, 152, 219, 0.18); color: #6ab7f0; }
+
+.stage-prices {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.pricebox {
+  display: grid !important;
+  gap: 4px;
+  padding: 12px 8px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.pricebox-label {
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--muted);
+  font-weight: 700;
+}
+.pricebox-value {
+  font-size: 1.15rem;
+  font-weight: 800;
+  /* Tabular figures stop the number jittering as digits change. */
+  font-variant-numeric: tabular-nums;
+}
+.pricebox--current { background: rgba(46, 204, 113, 0.1); border-color: rgba(46, 204, 113, 0.35); }
+.pricebox--current .pricebox-value { color: var(--accent); font-size: 1.5rem; animation: bidpop 0.3s ease-out; }
+
+@keyframes bidpop {
+  0% { transform: scale(1.14); opacity: 0.6; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.stage-holder {
+  /* Always present, even with no bids, so the card cannot change height. */
+  min-height: 22px;
+  font-size: 0.86rem;
+  color: var(--muted);
+  text-align: center;
+}
+.stage-holder strong { color: var(--gold); }
+
+.stage-empty { text-align: center; align-self: center; }
+.stage-empty h2 { font-size: 1.4rem !important; text-align: center !important; }
+.stage-empty p { color: var(--muted); text-align: center !important; margin-top: 6px !important; }
+
+/* SOLD / UNSOLD stamp — drawn OVER the card, so it displaces nothing. */
+.stamp {
+  position: absolute;
+  inset: 0;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px;
+  background: rgba(10, 16, 22, 0.9);
+  border-radius: var(--radius);
+  animation: stampin 0.25s ease-out;
+  pointer-events: none;
+}
+.stamp-word {
+  font-size: clamp(2rem, 5vw, 3.4rem);
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  transform: rotate(-6deg);
+  padding: 4px 26px;
+  border: 4px solid currentColor;
+  border-radius: 10px;
+}
+.stamp--sold .stamp-word { color: var(--accent); }
+.stamp--unsold .stamp-word { color: #7a8ca0; }
+.stamp-detail { font-size: 1rem; font-weight: 700; color: var(--text); margin-top: 10px; }
+
+@keyframes stampin {
+  0% { opacity: 0; transform: scale(1.06); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* --- Timer strip ---------------------------------------------------------- */
+.timerbar {
+  display: grid !important;
+  grid-template-columns: 74px minmax(0, 1fr);
+  align-items: center !important;
+  gap: 12px;
+  padding: 0 16px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.timerbar-value {
+  font-size: 1.3rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  color: var(--text);
+}
+.timerbar-track { height: 8px; background: #101a24; border-radius: 4px; overflow: hidden; }
+.timerbar-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 4px;
+  transition: width 0.1s linear;
+}
+.timerbar.is-urgent .timerbar-value { color: var(--danger); }
+.timerbar.is-urgent .timerbar-fill { background: var(--danger); }
+.timerbar.is-paused .timerbar-value { color: var(--gold); font-size: 0.9rem; }
+
+/* --- Controls ------------------------------------------------------------- */
+.stage-controls {
+  display: grid !important;
+  grid-template-rows: 1fr 24px;
+  align-items: center !important;
+  gap: 6px;
+  padding: 10px 16px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.controls-row {
+  display: flex !important;
+  justify-content: center;
+  align-items: center !important;
+  gap: 12px;
+}
+.btn {
+  /* Fixed width: the label changes (Start / Next / Finish) but the box must not. */
+  min-width: 170px;
+  height: 42px;
+  padding: 0 20px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  margin: 0;
+  transition: background-color 0.15s ease, opacity 0.15s ease;
+}
+.btn--ghost { background: var(--panel-2); color: var(--text); border: 1px solid var(--line); }
+.btn--ghost:hover:not(:disabled) { background: #26374a; }
+.btn--bid { background: var(--accent-dim); color: #fff; font-size: 1rem; }
+.btn--bid:hover:not(:disabled) { background: var(--accent); }
+.btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.status-line {
+  /* Always occupies its row, even when empty. */
+  font-size: 0.8rem;
+  color: var(--muted);
+  text-align: center !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.notice-reject { color: var(--gold); font-weight: 600; }
+.notice-error { color: var(--danger); font-weight: 600; }
+.notice-warn { color: var(--gold); }
+
+/* --- Right column --------------------------------------------------------- */
+.aside {
+  grid-area: right;
+  display: grid !important;
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+  min-height: 0;
+}
+.roster, .myteam { display: grid !important; min-height: 0; }
+.roster { grid-template-rows: auto minmax(0, 1fr); }
+.myteam { grid-template-rows: auto auto minmax(0, 1fr); }
+
+.roster-row {
+  padding: 7px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+.roster-main, .roster-sub {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between;
+  gap: 6px;
+}
+.roster-name {
+  font-size: 0.86rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.roster-badges { display: flex !important; gap: 4px; flex-shrink: 0; }
+.roster-sub { margin-top: 3px !important; font-size: 0.72rem; color: var(--muted); }
+.roster-purse { color: var(--accent); font-weight: 700; font-variant-numeric: tabular-nums; }
+.roster-row.is-offline { opacity: 0.45; }
+.roster-row.is-leading { background: rgba(241, 196, 15, 0.1); box-shadow: inset 3px 0 0 var(--gold); }
+
+.badge {
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 2px 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--muted);
+}
+.badge--admin { background: rgba(241, 196, 15, 0.2); color: var(--gold); }
+.badge--you { background: rgba(52, 152, 219, 0.2); color: #6ab7f0; }
+.badge--off { background: rgba(231, 76, 60, 0.2); color: var(--danger); }
+
+.linkbtn {
+  background: none;
+  border: none;
+  color: var(--danger);
+  font-size: 0.72rem;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+}
+.linkbtn:hover { text-decoration: underline; background: none; }
+/* Holds the kick button's space for rows that don't have one. */
+.linkbtn-spacer { display: inline-block; width: 22px; }
+
+.myteam-purse {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line);
+}
+.myteam-purse > div { display: grid !important; gap: 2px; }
+.mini-label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 700; }
+.mini-value { font-size: 0.95rem; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
+.mini-value--spent { color: var(--muted); }
+
+.myteam-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between;
+  gap: 8px;
+  height: 30px;
+  padding: 0 12px;
+  font-size: 0.8rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+.myteam-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.myteam-price { color: var(--accent); font-weight: 700; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+
+/* --- Paused overlay ------------------------------------------------------- */
+.paused-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: rgba(8, 13, 18, 0.86);
+}
+.paused-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 26px 34px;
+  text-align: center;
+  max-width: 440px;
+  margin: 0;
+}
+.paused-card h2 { font-size: 1.3rem !important; text-align: center !important; margin-bottom: 10px !important; }
+.paused-card p { text-align: center !important; color: var(--muted); font-size: 0.9rem; margin-bottom: 14px !important; }
+.paused-card strong { color: var(--gold); }
+
+/* --- Message / results shells --------------------------------------------- */
+.auction-app--message, .auction-app--results {
+  display: block !important;
+  overflow-y: auto;
+  padding: 20px;
+}
+.auction-app--message { display: flex !important; align-items: center !important; justify-content: center !important; }
+.messagebox { padding: 30px 40px; text-align: center; max-width: 420px; }
+.messagebox h2 { font-size: 1.3rem !important; text-align: center !important; margin-bottom: 10px !important; }
+.messagebox p { text-align: center !important; margin-bottom: 16px !important; }
+
+/* --- Results -------------------------------------------------------------- */
+.results { max-width: 1100px; margin: 0 auto !important; }
+.results h1 { font-size: 1.8rem; text-align: center !important; margin-bottom: 4px !important; }
+.results-sub { text-align: center !important; color: var(--muted); margin-bottom: 18px !important; font-size: 0.9rem; }
+.results-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 12px;
+}
+.results-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px;
+  cursor: pointer;
+  text-align: left;
+  color: var(--text);
+  font: inherit;
+  margin: 0;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.results-card:hover { border-color: var(--accent); transform: translateY(-2px); background: var(--panel); }
+.results-card h3 { font-size: 1rem; margin-bottom: 6px !important; }
+.results-card p { font-size: 0.8rem; color: var(--muted); margin: 2px 0 !important; }
+.results-card .price { color: var(--accent); font-weight: 700; }
+.results-back { margin-bottom: 14px !important; }
+
+/* --- Laptop / small-height accommodations --------------------------------- */
+@media (max-height: 780px) {
+  .auction-app { grid-template-rows: 46px minmax(0, 1fr); }
+  .stage { grid-template-rows: minmax(0, 1fr) 40px 82px; }
+  .stage-card { gap: 12px; padding: 14px 20px; }
+  .pricebox { padding: 8px 6px; }
+  .pricebox-value { font-size: 1rem; }
+  .pricebox--current .pricebox-value { font-size: 1.3rem; }
+  .btn { height: 38px; }
+}
+
+@media (max-width: 1180px) {
+  .auction-app { grid-template-columns: 240px minmax(0, 1fr) 250px; }
+}

@@ -1,33 +1,32 @@
 import { useCountdown } from '../hooks/useCountdown.js';
 
 /**
- * Countdown display. Reads an absolute server deadline and renders the
- * remaining time; it never tells the server anything.
+ * Countdown bar. Reads the server's absolute deadline and renders it; it never
+ * tells the server anything.
+ *
+ * The digits sit in a fixed-width tabular-figure slot so the bar does not
+ * twitch as the number changes width, and the whole strip keeps its height in
+ * every state.
  */
-export default function TimerRing({ endsAt, durationMs, status }) {
+export default function TimerRing({ endsAt, status, durationMs = 10_000 }) {
   const { seconds, fraction } = useCountdown(endsAt, durationMs);
 
-  if (status === 'PAUSED') {
-    return (
-      <div className="timer timer--paused">
-        <p>PAUSED</p>
-      </div>
-    );
-  }
-  if (status !== 'RUNNING' || !endsAt) {
-    return (
-      <div className="timer timer--idle">
-        <p>—</p>
-      </div>
-    );
-  }
+  const running = status === 'RUNNING' && endsAt;
+  const urgent = running && seconds <= 3;
 
-  const urgent = seconds <= 3;
+  let label = '—';
+  if (running) label = `${seconds}s`;
+  else if (status === 'PAUSED') label = 'PAUSED';
+  else if (status === 'SETTLED') label = 'DONE';
+
   return (
-    <div className={`timer${urgent ? ' timer--urgent' : ''}`}>
-      <p>{seconds}s</p>
-      <div className="timer-bar">
-        <div className="timer-bar-fill" style={{ width: `${fraction * 100}%` }} />
+    <div className={`timerbar${urgent ? ' is-urgent' : ''}${status === 'PAUSED' ? ' is-paused' : ''}`}>
+      <span className="timerbar-value">{label}</span>
+      <div className="timerbar-track">
+        <div
+          className="timerbar-fill"
+          style={{ width: running ? `${fraction * 100}%` : '0%' }}
+        />
       </div>
     </div>
   );

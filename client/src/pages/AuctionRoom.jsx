@@ -2,17 +2,20 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useAuctionRoom } from '../hooks/useAuctionRoom.js';
+import { usePlayerCatalog } from '../hooks/usePlayerCatalog.js';
 import { getRoomCode, getUserName, clearRoom } from '../lib/identity.js';
 import { formatCr } from '../lib/bidRules.js';
 
+import PlayerLedger from '../components/PlayerLedger.jsx';
 import PlayerCard from '../components/PlayerCard.jsx';
 import BidPanel from '../components/BidPanel.jsx';
 import TimerRing from '../components/TimerRing.jsx';
 import ParticipantList from '../components/ParticipantList.jsx';
 import MyTeam from '../components/MyTeam.jsx';
-import SettlementBanner from '../components/SettlementBanner.jsx';
 import PausedOverlay from '../components/PausedOverlay.jsx';
 import ResultsScreen from '../components/ResultsScreen.jsx';
+
+import '../styles/auction.css';
 
 const JOIN_ERRORS = {
   ROOM_NOT_FOUND: 'That room does not exist.',
@@ -22,11 +25,9 @@ const JOIN_ERRORS = {
 };
 
 /**
- * The auction room.
- *
- * All state lives in useAuctionRoom; this component only lays it out. The
- * version it replaces was 1144 lines with 43 useState hooks and ~15 effects
- * that registered socket listeners and overwrote each other's state.
+ * The auction room: a fixed-height three-column grid that fits a laptop
+ * without the page ever scrolling. Only the three panes scroll internally,
+ * and every region holds its size regardless of what the auction is doing.
  */
 export default function AuctionRoom() {
   const navigate = useNavigate();
@@ -34,9 +35,8 @@ export default function AuctionRoom() {
   const userName = getUserName();
 
   const [state, actions] = useAuctionRoom(roomCode, userName);
+  const { players: catalog } = usePlayerCatalog();
 
-  // Missing identity: send them back to pick it up rather than joining as
-  // "Anonymous" into a room they never chose.
   useEffect(() => {
     if (!roomCode) navigate('/joinroom', { replace: true });
     else if (!userName) navigate('/getusername', { replace: true });
@@ -47,12 +47,12 @@ export default function AuctionRoom() {
   if (state.status === 'error') {
     const message = JOIN_ERRORS[state.error] || state.error || 'Something went wrong.';
     return (
-      <div className="auction-container">
-        <div className="room-status">
+      <div className="auction-app auction-app--message">
+        <div className="panel messagebox">
           <h2>Cannot join</h2>
-          <p className="status-message notice-error">{message}</p>
+          <p className="notice-error">{message}</p>
           <button
-            className="start-btn"
+            className="btn btn--bid"
             onClick={() => {
               clearRoom();
               navigate('/');
@@ -66,23 +66,69 @@ export default function AuctionRoom() {
   }
 
   if (state.status !== 'joined') {
-    return <div className="loading">Connecting to room {roomCode}…</div>;
+    return (
+      <div className="auction-app auction-app--message">
+        <div className="panel messagebox">
+          <h2>Connecting…</h2>
+          <p className="muted">Room {roomCode}</p>
+        </div>
+      </div>
+    );
   }
 
   if (state.phase === 'ENDED') {
     return (
-      <div className="auction-container">
+      <div className="auction-app auction-app--results">
         <ResultsScreen results={state.results} roomCode={state.roomCode} />
       </div>
     );
   }
 
+  const progress = state.totalLots
+    ? `Lot ${Math.max(0, state.lotIndex) + 1} of ${state.totalLots}`
+    : 'Lobby';
+
   return (
-    <div className="auction-container">
-      <div className="user-info">
-        <p>Welcome, {state.me?.name}</p>
-        <p className="purse-info">Purse: {formatCr(state.me?.purse)}</p>
-      </div>
+    <div className="auction-app">
+      <header className="topbar">
+        <div className="topbar-left">
+          <h1>Cricket League Auction</h1>
+          <span className="topbar-room">
+            Room <code>{state.roomCode}</code>
+          </span>
+        </div>
+        <div className="topbar-mid">
+          <span className={`phase-pill phase-${state.phase.toLowerCase()}`}>{state.phase}</span>
+          <span className="topbar-progress">{progress}</span>
+        </div>
+        <div className="topbar-right">
+          <span className="topbar-user">{state.me?.name}</span>
+          <span className="topbar-purse">{formatCr(state.me?.purse)}</span>
+        </div>
+      </header>
+
+      <PlayerLedger
+        catalog={catalog}
+        settled={state.settled}
+        currentPlayerId={state.player?._id}
+      />
+
+      <main className="stage">
+        <PlayerCard player={state.player} lot={state.lot} settlement={state.settlement} />
+        <TimerRing endsAt={state.lot?.endsAt} status={state.lot?.status} />
+        <BidPanel state={state} actions={actions} />
+      </main>
+
+      <aside className="aside">
+        <ParticipantList
+          participants={state.participants}
+          me={state.me}
+          isAdmin={state.isAdmin}
+          onKick={actions.kick}
+          highestBidderId={state.lot?.highestBidderId}
+        />
+        <MyTeam me={state.me} />
+      </aside>
 
       <PausedOverlay
         waitingFor={state.waitingFor}
@@ -90,42 +136,6 @@ export default function AuctionRoom() {
         participants={state.participants}
         onResume={actions.resumeAuction}
       />
-
-      <SettlementBanner settlement={state.settlement} />
-
-      <div className="auction-live-container">
-        <MyTeam me={state.me} />
-
-        <div className="auction-live">
-          <div className="auction-header">
-            <h1>Live Auction</h1>
-            <p className="room-info">
-              Room: <strong>{state.roomCode}</strong> · {state.participants.length} in room
-              {state.phase === 'LIVE' && state.totalLots
-                ? ` · Lot ${state.lotIndex + 1}/${state.totalLots}`
-                : ''}
-            </p>
-          </div>
-
-          <PlayerCard
-            player={state.player}
-            lot={state.lot}
-            lotIndex={state.lotIndex}
-            totalLots={state.totalLots}
-          />
-
-          <TimerRing endsAt={state.lot?.endsAt} status={state.lot?.status} />
-
-          <BidPanel state={state} actions={actions} />
-        </div>
-
-        <ParticipantList
-          participants={state.participants}
-          me={state.me}
-          isAdmin={state.isAdmin}
-          onKick={actions.kick}
-        />
-      </div>
     </div>
   );
 }

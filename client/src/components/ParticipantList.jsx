@@ -1,42 +1,62 @@
 import { formatCr } from '../lib/bidRules.js';
 
 /**
- * Room participants with live purse and connection state.
+ * Managers in the room, with live purse.
  *
- * Always rendered — the old version unmounted this panel whenever the timer
- * stopped, which shifted the whole page at every round boundary.
+ * Always rendered — the old version unmounted whenever the timer stopped,
+ * which shifted the whole page at every round boundary. Rows are a fixed
+ * height and the badge slot is always present.
  */
-export default function ParticipantList({ participants, me, isAdmin, maxParticipants = 10, onKick }) {
+export default function ParticipantList({ participants, me, isAdmin, onKick, highestBidderId }) {
   return (
-    <div className="room-status">
-      <h2>
-        Participants ({participants.length}/{maxParticipants})
-      </h2>
-      <div className="users-list">
-        {participants.map((p) => (
-          <div
-            key={p.userId}
-            className={`user-item${p.connected ? '' : ' user-item--offline'}`}
-          >
-            <span className="user-name">
-              {p.name}
-              {p.isAdmin && <span className="badge badge--admin">HOST</span>}
-              {p.userId === me?.userId && <span className="badge">YOU</span>}
-              {!p.connected && p.status === 'ACTIVE' && (
-                <span className="badge badge--offline">OFFLINE</span>
-              )}
-            </span>
-            <span className="user-purse">
-              {formatCr(p.purse)} · {p.teamSize} {p.teamSize === 1 ? 'player' : 'players'}
-            </span>
-            {isAdmin && p.userId !== me?.userId && (
-              <button className="kick-btn" onClick={() => onKick(p.userId)}>
-                Kick
-              </button>
-            )}
-          </div>
-        ))}
+    <section className="panel roster">
+      <header className="panel-head">
+        <h2>Managers</h2>
+        <span className="panel-count">{participants.length}</span>
+      </header>
+
+      <div className="panel-scroll">
+        {participants.map((p) => {
+          const isMe = p.userId === me?.userId;
+          const leading = p.userId === highestBidderId;
+          return (
+            <div
+              key={p.userId}
+              className={[
+                'roster-row',
+                p.connected ? '' : 'is-offline',
+                leading ? 'is-leading' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+            >
+              <div className="roster-main">
+                <span className="roster-name" title={p.name}>
+                  {p.name}
+                </span>
+                <span className="roster-badges">
+                  {p.isAdmin && <span className="badge badge--admin">HOST</span>}
+                  {isMe && <span className="badge badge--you">YOU</span>}
+                  {!p.connected && <span className="badge badge--off">OFF</span>}
+                </span>
+              </div>
+              <div className="roster-sub">
+                <span className="roster-purse">{formatCr(p.purse)}</span>
+                <span className="roster-count">
+                  {p.teamSize} {p.teamSize === 1 ? 'player' : 'players'}
+                </span>
+                {isAdmin && !isMe ? (
+                  <button className="linkbtn" onClick={() => onKick(p.userId)}>
+                    kick
+                  </button>
+                ) : (
+                  <span className="linkbtn-spacer" />
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
-    </div>
+    </section>
   );
 }

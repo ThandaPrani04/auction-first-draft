@@ -35,7 +35,9 @@ const initialState = {
   me: null, // { userId, name, purse, team }
   waitingFor: [],
 
-  settlement: null, // most recent SOLD/UNSOLD, for the banner
+  settlement: null, // most recent SOLD/UNSOLD, for the in-card stamp
+  /** Every lot decided so far — drives the ledger's strikethroughs. */
+  settled: [],
   results: null,
   notice: null, // transient message (a rejected bid, an error)
 };
@@ -79,6 +81,7 @@ function reducer(state, action) {
         me: s.me,
         waitingFor: s.waitingFor,
         settlement: state.settlement,
+        settled: s.settled ?? state.settled,
       };
     }
 
@@ -166,6 +169,21 @@ function reducer(state, action) {
           winnerName: action.winnerName,
           isLastLot: action.isLastLot,
         },
+        // Append unless this lot is already recorded, so a re-sync followed by
+        // the live event cannot double-count it in the ledger.
+        settled: state.settled.some((s) => s.index === action.index)
+          ? state.settled
+          : [
+              ...state.settled,
+              {
+                index: action.index,
+                player: action.player,
+                status: action.status,
+                soldPrice: action.soldPrice,
+                winnerUserId: action.winnerUserId,
+                winnerName: action.winnerName,
+              },
+            ],
         needsSync: state.needsSync || ord === 'gap',
       };
     }

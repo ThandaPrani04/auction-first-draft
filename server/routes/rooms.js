@@ -38,6 +38,24 @@ roomsRouter.get('/health', (req, res) => {
 });
 
 /**
+ * The master player catalog in canonical order (set, then name).
+ *
+ * This is deliberately NOT a room's shuffled script — the ledger in the UI
+ * shows the full roster in a stable, readable order and crosses players off as
+ * they settle, so the random auction order is visible as scattered strikeouts
+ * rather than a top-to-bottom sweep.
+ */
+roomsRouter.get('/players', async (req, res) => {
+  try {
+    const players = await Player.find({}).sort({ set: 1, name: 1 }).lean();
+    res.json(players.map((p) => ({ ...p, _id: String(p._id) })));
+  } catch (err) {
+    console.error('[rooms] player catalog failed:', err);
+    res.status(500).json({ error: 'Could not load players' });
+  }
+});
+
+/**
  * Create a room. Shuffles the player catalog ONCE and persists the resulting
  * order as the room's immutable auction script.
  */
