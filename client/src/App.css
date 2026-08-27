@@ -1136,3 +1136,14 @@ input[type="checkbox"]:disabled + label {
   .auction-live-container > .room-status,
   .team-sidebar { flex: 1 1 auto; width: 100%; }
 }
+
+/* The SOLD/UNSOLD banner is a fullscreen fixed overlay. It must never
+   intercept clicks: it sits directly over the admin's "Next Player" button,
+   which is the control that advances past it. It auto-dismisses too, but
+   pointer-events:none is what guarantees the room can't deadlock behind it. */
+.player-status-message { pointer-events: none; }
+
+/* Sold/unsold is the headline of the moment — make it readable rather than
+   inheriting the generic white h2. */
+.player-status-message.is-sold h2 { color: #2ecc71; }
+.player-status-message.is-unsold h2 { color: #bdc3c7; }

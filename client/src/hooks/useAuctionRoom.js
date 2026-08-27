@@ -206,6 +206,15 @@ function reducer(state, action) {
       };
     }
 
+    /**
+     * The SOLD/UNSOLD banner dismisses itself. It used to clear only when the
+     * next lot opened — but the banner is a fullscreen overlay and opening the
+     * next lot needs the admin's "Next Player" button underneath it, so the
+     * room deadlocked on every settlement.
+     */
+    case 'CLEAR_SETTLEMENT':
+      return state.settlement ? { ...state, settlement: null } : state;
+
     case 'NOTICE':
       return { ...state, notice: action.notice };
 
@@ -301,6 +310,13 @@ export function useAuctionRoom(roomCode, userName) {
     const t = setTimeout(() => dispatch({ type: 'CLEAR_NOTICE' }), 3500);
     return () => clearTimeout(t);
   }, [state.notice]);
+
+  /** So does the settlement banner. */
+  useEffect(() => {
+    if (!state.settlement) return undefined;
+    const t = setTimeout(() => dispatch({ type: 'CLEAR_SETTLEMENT' }), 2500);
+    return () => clearTimeout(t);
+  }, [state.settlement]);
 
   const actions = useMemo(
     () => ({

@@ -177,6 +177,18 @@ async function main() {
   await resumed2P;
   check('admin can drop an absent player and continue', true);
 
+  // --- An unsold lot must not block the auction ---------------------------
+  // Nobody bids on the resumed lot, so it expires with no winner.
+  const unsold = await waitFor(host2, 'auction:settled', 15000);
+  check('a lot with no bids settles as UNSOLD', unsold.status === 'UNSOLD',
+    unsold.player?.name);
+  check('an unsold lot debits nobody',
+    unsold.participants.every((p) => p.purse === 12000 || p.userId === hostId));
+
+  const afterUnsold = await emitAck(host2, 'auction:next');
+  check('admin can advance past an UNSOLD lot', afterUnsold?.ok === true,
+    afterUnsold?.code ?? '');
+
   host2.close();
 
   console.log('');

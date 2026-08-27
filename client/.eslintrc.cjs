@@ -22,4 +22,12 @@ module.exports = {
       { allowConstantExport: true },
     ],
   },
+  overrides: [
+    {
+      // Build config runs in Node, not the browser, so it legitimately uses
+      // `process`.
+      files: ['vite.config.js'],
+      env: { node: true, browser: false },
+    },
+  ],
 }
