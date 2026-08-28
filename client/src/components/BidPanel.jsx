@@ -3,11 +3,12 @@ import { formatCr, nextBid } from '../lib/bidRules.js';
 /**
  * Controls plus the status line.
  *
- * Both buttons are always in the DOM and always the same width — disabled
- * rather than removed, and held with `visibility` for non-admins — so the BID
- * button never moves. The status line always renders too, falling back to a
- * non-breaking space, because a message appearing and disappearing was
- * shifting everything under it.
+ * The host's flow button (Start / Next / Finish) is rendered only for the
+ * host; everyone else sees just the BID button, centred. The status line
+ * always renders (falling back to a non-breaking space) so nothing under it
+ * shifts as messages come and go, and it is phrased differently for the host
+ * and the bidders — the host is told what to press, the bidders what to wait
+ * for.
  *
  * Disabling BID when you already hold the top bid is UX only; the server
  * enforces the same rule and rejects the bid outright.
@@ -30,22 +31,25 @@ export default function BidPanel({ state, actions }) {
 
   let status = ' ';
   if (paused) status = 'Auction paused';
-  else if (phase === 'LOBBY') status = isAdmin ? 'Start when everyone has joined' : 'Waiting for the host to start';
-  else if (settled) status = isAdmin ? 'Call the next player' : 'Waiting for the host';
+  else if (phase === 'LOBBY') status = isAdmin ? 'Press Start when everyone has joined' : 'Waiting for the host to start the auction';
+  else if (settled && lastLot) status = isAdmin ? 'Press Finish to see the results' : 'Waiting for the host to finish the auction';
+  else if (settled) status = isAdmin ? 'Press Next Player to continue' : 'Waiting for the host to call the next player';
   else if (iAmHighest) status = 'You hold the highest bid';
   else if (running && !canAfford) status = 'Not enough purse for the next bid';
+  else if (running) status = isAdmin ? 'Bidding is open — you can bid too' : 'Bidding is open';
 
   return (
     <div className="stage-controls">
       <div className="controls-row">
-        <button
-          className="btn btn--ghost"
-          onClick={phase === 'LOBBY' ? actions.startAuction : actions.nextPlayer}
-          disabled={adminDisabled}
-          style={{ visibility: isAdmin ? 'visible' : 'hidden' }}
-        >
-          {adminLabel}
-        </button>
+        {isAdmin && (
+          <button
+            className="btn btn--ghost"
+            onClick={phase === 'LOBBY' ? actions.startAuction : actions.nextPlayer}
+            disabled={adminDisabled}
+          >
+            {adminLabel}
+          </button>
+        )}
 
         <button
           className="btn btn--bid"
