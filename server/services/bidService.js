@@ -24,20 +24,29 @@
  * 3. A monotonic `version` per room orders every broadcast, so a client can
  *    discard stale updates and detect that it missed one.
  *
- * 4. What actually happens in a race: A is processed first (price -> 1.20 Cr,
- *    highest = A), then B is processed and bids 1.40 Cr. That is CORRECT
- *    auction behaviour, not a bug — B wanted to outbid and the price moved.
- *    Nothing is lost and nothing is double-counted. The one rule that must
- *    hold is that the standing highest bidder cannot bid against themselves,
- *    and that is enforced here rather than trusted to a disabled button.
+ * 4. What actually happens in a race, by default: A is processed first (price
+ *    -> 1.20 Cr, highest = A), then B is processed and would bid 1.40 Cr. In
+ *    plain auction terms that is CORRECT behaviour — B wanted to outbid and
+ *    the price moved. But this app also honours the client's INTENT about
+ *    the price it is bidding against: the client attaches `expectedBid`, the
+ *    price it last saw on screen when the BID button was pressed. If that no
+ *    longer matches the server's `currentBid` when the message is handled —
+ *    because someone else's bid (like A's) got there first — B did not agree
+ *    to pay whatever the new increment happens to be, so the bid is rejected
+ *    with OUTBID rather than silently re-priced. B sees the new price and can
+ *    press BID again to accept it.
+ *
+ * 5. The one rule that must hold regardless of races is that the standing
+ *    highest bidder cannot bid against themselves, and that is enforced here
+ *    rather than trusted to a disabled button.
  */
-import { nextBid } from '../shared/bidRules.js';
+import { nextBid, formatCr } from '../shared/bidRules.js';
 import { scheduleSettle } from './auctionService.js';
 
 /**
  * @returns {{ok: true, amount: number} | {ok: false, code: string, message: string}}
  */
-export function placeBid(io, room, userId, { lotIndex } = {}) {
+export function placeBid(io, room, userId, { lotIndex, expectedBid } = {}) {
   // ---------- BEGIN CRITICAL SECTION — no await past this point ----------
   if (room.phase !== 'LIVE') {
     return reject('LOT_CLOSED', 'The auction is not running.');
@@ -63,6 +72,19 @@ export function placeBid(io, room, userId, { lotIndex } = {}) {
   // what makes the rule true.
   if (lot.highestBidderId === userId) {
     return reject('ALREADY_HIGHEST', 'You are already the highest bidder.');
+  }
+
+  // Optimistic concurrency: the client tells us the price it saw when it
+  // pressed BID. If the server's price has since moved — someone else's bid
+  // beat this one to the critical section above — this client did not agree
+  // to the new price, so reject rather than silently bid the new increment
+  // on their behalf. `expectedBid` is undefined for older clients, which
+  // opts them out of this check rather than rejecting every bid they send.
+  if (expectedBid !== undefined && expectedBid !== lot.currentBid) {
+    return reject(
+      'OUTBID',
+      `Too slow — someone else bid first. The price is now ${formatCr(lot.currentBid)}.`
+    );
   }
 
   // Computed from SERVER state, never from the payload.

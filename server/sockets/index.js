@@ -122,11 +122,11 @@ export function registerSocketHandlers(io) {
       respond(ack, { ok: true, state });
     });
 
-    socket.on('bid:place', ({ lotIndex } = {}) => {
+    socket.on('bid:place', ({ lotIndex, expectedBid } = {}) => {
       const room = currentRoom(socket);
       if (!room) return socket.emit('room:error', { code: 'NOT_IN_ROOM' });
 
-      const result = placeBid(io, room, socket.data.userId, { lotIndex });
+      const result = placeBid(io, room, socket.data.userId, { lotIndex, expectedBid });
       if (!result.ok) socket.emit('bid:rejected', result);
     });
 

@@ -53,7 +53,7 @@ export default function BidPanel({ state, actions }) {
 
         <button
           className="btn btn--bid"
-          onClick={() => actions.placeBid(lotIndex)}
+          onClick={() => actions.placeBid(lotIndex, lot?.currentBid ?? null)}
           disabled={!running || iAmHighest || !canAfford}
         >
           {amount != null ? `Bid ${formatCr(amount)}` : 'Place Bid'}

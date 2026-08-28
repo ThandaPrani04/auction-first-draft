@@ -345,7 +345,7 @@ export function useAuctionRoom(roomCode, userName) {
 
   const actions = useMemo(
     () => ({
-      placeBid: (lotIndex) => socket.emit('bid:place', { lotIndex }),
+      placeBid: (lotIndex, expectedBid) => socket.emit('bid:place', { lotIndex, expectedBid }),
       startAuction: () => socket.emit('auction:start', {}),
       nextPlayer: () => socket.emit('auction:next', {}),
       resumeAuction: (dropUserIds = []) => socket.emit('auction:resume', { dropUserIds }),
