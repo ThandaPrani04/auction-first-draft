@@ -1,0 +1,180 @@
+/* Auth.css — shared styling for the Create Room and Join Room pages.
+   App.css sets a global `div { display:flex; flex-direction:column;
+   align-items:center; margin:20px }`; the page/card rules below reset that
+   margin so the card centres cleanly in the viewport. */
+
+.auth-page {
+  margin: 0;
+  min-height: 100vh;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--page-bg);
+}
+
+.auth-card {
+  margin: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 400px;
+  align-items: stretch;
+  gap: 0;
+  padding: 34px 32px 28px;
+  border-radius: 20px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  box-shadow: var(--card-shadow);
+  backdrop-filter: blur(14px);
+  color: var(--text);
+}
+
+.auth-back {
+  position: absolute;
+  top: 16px;
+  left: 18px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+.auth-back:hover { color: var(--accent); }
+
+.auth-logo {
+  font-size: 2rem;
+  line-height: 1;
+  margin: 6px 0 12px;
+  align-self: flex-start;
+}
+
+.auth-title {
+  margin: 0 0 6px;
+  font-family: 'Sora', 'Inter', sans-serif;
+  font-size: 1.7rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--text-strong);
+  text-align: left;
+}
+.auth-subtitle {
+  margin: 0 0 22px;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: var(--muted);
+  text-align: left;
+}
+
+/* --- Form ---------------------------------------------------------------- */
+.auth-form {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  align-items: stretch;
+  gap: 16px;
+}
+.auth-field {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 7px;
+}
+.auth-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  color: var(--text);
+}
+.auth-field input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  font-size: 1rem;
+  font-family: inherit;
+  color: var(--text-strong);
+  background: var(--field-bg);
+  border: 1px solid var(--field-border);
+  border-radius: 11px;
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+.auth-field input::placeholder { color: var(--muted); opacity: 0.7; }
+.auth-field input:focus {
+  outline: none;
+  border-color: #2ecc71;
+  background: rgba(46, 204, 113, 0.06);
+  box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.18);
+}
+.auth-field input:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.auth-code {
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  font-weight: 700;
+  text-align: center;
+}
+.auth-code::placeholder { letter-spacing: 4px; }
+
+/* --- Submit -------------------------------------------------------------- */
+.auth-submit {
+  margin: 4px 0 0;
+  width: 100%;
+  padding: 13px;
+  font-size: 1rem;
+  font-weight: 700;
+  font-family: 'Inter', sans-serif;
+  color: var(--accent-ink);
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(46, 204, 113, 0.3);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+.auth-submit:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(46, 204, 113, 0.42);
+}
+.auth-submit:disabled {
+  background: var(--muted);
+  color: var(--card-bg);
+  opacity: 0.6;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.auth-error {
+  margin: 0;
+  padding: 9px 12px;
+  font-size: 0.86rem;
+  text-align: left;
+  color: var(--danger-soft);
+  background: rgba(231, 76, 60, 0.12);
+  border: 1px solid rgba(231, 76, 60, 0.35);
+  border-radius: 9px;
+}
+
+.auth-switch {
+  margin: 20px 0 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+  text-align: center;
+}
+.auth-switch a {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+.auth-switch a:hover { text-decoration: underline; }
+
+/* --- Responsive ---------------------------------------------------------- */
+@media (max-width: 460px) {
+  .auth-card { padding: 30px 22px 24px; }
+  .auth-title { font-size: 1.5rem; }
+}

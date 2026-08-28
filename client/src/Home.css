@@ -1,178 +1,239 @@
-/* Home.css */
+/* Home.css — landing page
+   Note: App.css sets a global `div { display:flex; flex-direction:column;
+   align-items:center; margin:20px }`. Every rule here that positions a <div>
+   resets that margin explicitly so the layout is predictable. */
 
-/* Container Styles */
-.home-container {
-  text-align: center;
-  margin: 0 auto;
-  padding: 40px 20px;
-  max-width: 1200px;
-  background-color: #f9f9f9;
-  border-radius: 10px;
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-}
-
-/* Heading Styles */
-.home-container h1 {
-  font-size: 2.5rem;
-  color: #333;
-  margin-bottom: 20px;
-  font-weight: bold;
-}
-
-/* Button Styles */
-.home-container button {
-  margin: 15px;
-  padding: 12px 25px;
-  font-size: 1.1rem;
-  cursor: pointer;
-  border: none;
-  border-radius: 6px;
-  background-color: #007bff;
-  color: white;
-  transition: background-color 0.3s ease, transform 0.2s ease;
-}
-
-.home-container button:hover {
-  background-color: #0056b3;
-  transform: translateY(-3px);
-}
-
-.home-container button:active {
-  background-color: #004494;
-  transform: translateY(0);
-}
-
-/* Link Styles */
-.home-container a {
-  text-decoration: none;
-  color: #007bff;
-  font-weight: bold;
-  transition: color 0.3s ease;
-}
-
-.home-container a:hover {
-  color: #0056b3;
-  text-decoration: underline;
-}
-
-.hero-section {
-  text-align: center;
-  margin-bottom: 60px;
-}
-
-.hero-section h1 {
-  font-size: 3.5rem;
-  color: #2c3e50;
-  margin-bottom: 20px;
-  font-weight: bold;
-}
-
-.subtitle {
-  font-size: 1.5rem;
-  color: #666;
-  margin-bottom: 40px;
-}
-
-.action-buttons {
+.home {
+  margin: 0;
+  min-height: 100vh;
+  width: 100%;
   display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: clamp(16px, 3vw, 28px);
+  box-sizing: border-box;
+  color: var(--text);
+  background: var(--page-bg);
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+/* --- Brand -------------------------------------------------------------- */
+.home__brand {
+  margin: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+}
+.home__logo { font-size: 1.6rem; line-height: 1; }
+.home__brandname {
+  font-family: 'Sora', 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: 0.2px;
+  color: var(--text-strong);
+}
+
+/* --- Main ---------------------------------------------------------------- */
+.home__main {
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  width: 100%;
+  max-width: 1080px;
+  align-items: center;
   justify-content: center;
-  gap: 20px;
+  gap: clamp(28px, 5vh, 56px);
+  padding: 24px 0;
 }
 
-.create-btn,
-.join-btn {
-  padding: 15px 40px;
-  font-size: 1.2rem;
-  border: none;
-  border-radius: 30px;
+/* --- Resume banner ------------------------------------------------------- */
+.home__resume {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 18px;
+  border-radius: 999px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  font-weight: bold;
+  font: inherit;
+  color: var(--text-strong);
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  box-shadow: 0 6px 18px rgba(46, 204, 113, 0.18);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
 }
-
-.create-btn {
-  background: #3498db;
-  color: white;
-}
-
-.create-btn:hover {
-  background: #2980b9;
+.home__resume:hover {
   transform: translateY(-2px);
+  background: var(--surface-hover);
+  box-shadow: 0 10px 26px rgba(46, 204, 113, 0.28);
+}
+.home__resume-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.6);
+  animation: resume-pulse 1.8s ease-out infinite;
+}
+@keyframes resume-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.5); }
+  100% { box-shadow: 0 0 0 8px rgba(46, 204, 113, 0); }
+}
+.home__resume-text { font-size: 0.92rem; }
+.home__resume-text strong { color: var(--accent); letter-spacing: 0.05em; }
+.home__resume-cta { font-size: 0.9rem; font-weight: 700; color: var(--accent); }
+
+/* --- Hero ---------------------------------------------------------------- */
+.home__hero {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 16px;
+  max-width: 760px;
+}
+.home__eyebrow {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--accent);
+  padding: 5px 12px;
+  border: 1px solid rgba(46, 204, 113, 0.35);
+  border-radius: 999px;
+  background: rgba(46, 204, 113, 0.10);
+}
+.home__title {
+  margin: 0;
+  font-family: 'Sora', 'Inter', sans-serif;
+  font-weight: 800;
+  font-size: clamp(2rem, 5vw, 3.4rem);
+  line-height: 1.08;
+  letter-spacing: -1px;
+  color: var(--text-strong);
+  text-align: center;
+}
+.home__accent {
+  background: linear-gradient(90deg, #2ecc71, #f1c40f);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.home__subtitle {
+  margin: 0;
+  font-size: clamp(1rem, 1.6vw, 1.18rem);
+  line-height: 1.55;
+  color: var(--muted);
+  max-width: 540px;
 }
 
-.join-btn {
-  background: #2ecc71;
-  color: white;
+.home__actions {
+  margin: 8px 0 0;
+  display: flex;
+  flex-direction: row;
+  gap: 14px;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
-.join-btn:hover {
-  background: #27ae60;
+/* --- Buttons ------------------------------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 13px 30px;
+  border-radius: 12px;
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+.btn--primary {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: var(--accent-ink);
+  box-shadow: 0 10px 26px rgba(46, 204, 113, 0.32);
+}
+.btn--primary:hover {
   transform: translateY(-2px);
+  box-shadow: 0 14px 32px rgba(46, 204, 113, 0.42);
+}
+.btn--ghost {
+  background: var(--surface);
+  color: var(--text-strong);
+  border-color: var(--muted);
+}
+.btn--ghost:hover {
+  transform: translateY(-2px);
+  background: var(--surface-hover);
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
-.features {
+/* --- Features ------------------------------------------------------------ */
+.home__features {
+  margin: 0;
+  width: 100%;
+  flex-direction: row;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 30px;
-  margin-top: 60px;
+  gap: 16px;
 }
-
-.feature-card {
-  background: white;
-  padding: 30px;
-  border-radius: 10px;
-  text-align: center;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease;
+.feature {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  gap: 8px;
+  padding: 20px;
+  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  backdrop-filter: blur(6px);
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
 }
-
-.feature-card:hover {
-  transform: translateY(-10px);
+.feature:hover {
+  transform: translateY(-4px);
+  border-color: rgba(46, 204, 113, 0.4);
+  background: var(--surface-hover);
 }
-
-.feature-card h3 {
+.feature__icon {
   font-size: 1.5rem;
-  color: #2c3e50;
-  margin-bottom: 15px;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: rgba(46, 204, 113, 0.12);
+}
+.feature__title {
+  margin: 0;
+  font-family: 'Sora', 'Inter', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+.feature__text {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--muted);
+  text-align: left;
 }
 
-.feature-card p {
-  color: #666;
-  line-height: 1.6;
-}
-
-/* Media Queries */
-@media (max-width: 768px) {
-  .home-container {
-      margin: 20px;
-      padding: 15px;
-  }
-
-  .home-container h1 {
-      font-size: 2rem;
-  }
-
-  .home-container button {
-      margin: 10px;
-      padding: 10px 20px;
-      font-size: 1rem;
-  }
-
-  .hero-section h1 {
-    font-size: 2.5rem;
-  }
-
-  .features {
-    grid-template-columns: 1fr;
-  }
-
-  .action-buttons {
-    flex-direction: column;
-  }
-
-  .create-btn,
-  .join-btn {
-    width: 100%;
-    margin: 5px 0;
-  }
+/* --- Responsive ---------------------------------------------------------- */
+@media (max-width: 720px) {
+  .home__features { grid-template-columns: 1fr; }
+  .home__actions { width: 100%; flex-direction: column; }
+  .btn { width: 100%; }
+  .feature { flex-direction: row; align-items: center; }
+  .feature__text { display: none; }
 }

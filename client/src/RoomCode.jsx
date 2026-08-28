@@ -2,12 +2,12 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { checkRoom } from './lib/api.js';
 import { setRoomCode as persistRoomCode, clearRoom } from './lib/identity.js';
-import './JoinRoom.css';
+import ThemeToggle from './components/ThemeToggle.jsx';
+import './Auth.css';
 
 /**
  * Recovery page: we know who you are but not which room you wanted.
- * (RoomCode.css was a near byte-for-byte copy of JoinRoom.css, so this shares
- * the stylesheet rather than duplicating it.)
+ * Shares the Auth.css styling used by the Create/Join pages.
  */
 const RoomCode = () => {
   const [roomCode, setRoomCodeInput] = useState('');
@@ -37,28 +37,37 @@ const RoomCode = () => {
   };
 
   return (
-    <div className="joinroom-container">
-      <form onSubmit={handleSubmit}>
-        <label>
-          Enter Room Code:
-          <input
-            type="text"
-            value={roomCode}
-            onChange={(e) => {
-              setRoomCodeInput(e.target.value.toUpperCase());
-              setError('');
-            }}
-            placeholder="Room code"
-            maxLength={6}
-            required
-            disabled={isSubmitting}
-          />
-        </label>
-        {error && <p className="error-message">{error}</p>}
-        <button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Checking…' : 'Continue'}
-        </button>
-      </form>
+    <div className="auth-page">
+      <ThemeToggle className="theme-toggle--float" />
+      <div className="auth-card">
+        <span className="auth-logo">🏏</span>
+        <h1 className="auth-title">Which room?</h1>
+        <p className="auth-subtitle">
+          Enter the room code to rejoin your auction.
+        </p>
+        <form className="auth-form" onSubmit={handleSubmit}>
+          <label className="auth-field">
+            <span className="auth-label">Room code</span>
+            <input
+              type="text"
+              className="auth-code"
+              value={roomCode}
+              onChange={(e) => {
+                setRoomCodeInput(e.target.value.toUpperCase());
+                setError('');
+              }}
+              placeholder="ABC123"
+              maxLength={6}
+              required
+              disabled={isSubmitting}
+            />
+          </label>
+          {error && <p className="auth-error">{error}</p>}
+          <button className="auth-submit" type="submit" disabled={isSubmitting}>
+            {isSubmitting ? 'Checking…' : 'Continue'}
+          </button>
+        </form>
+      </div>
     </div>
   );
 };

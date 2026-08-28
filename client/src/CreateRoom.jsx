@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { createRoom } from './lib/api.js';
 import { setUserName, setRoomCode, setUserId } from './lib/identity.js';
-import './CreateRoom.css';
+import ThemeToggle from './components/ThemeToggle.jsx';
+import './Auth.css';
 
 /**
  * Create a room.
@@ -43,28 +44,40 @@ const CreateRoom = () => {
   };
 
   return (
-    <div className="createroom-container">
-      <form onSubmit={handleSubmit}>
-        <label>
-          Enter your name:
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => {
-              setName(e.target.value);
-              setError('');
-            }}
-            placeholder="Your name"
-            maxLength={24}
-            required
-            disabled={isSubmitting}
-          />
-        </label>
-        {error && <p className="error-message">{error}</p>}
-        <button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Creating Room…' : 'Create Room'}
-        </button>
-      </form>
+    <div className="auth-page auth-page--create">
+      <ThemeToggle className="theme-toggle--float" />
+      <div className="auth-card">
+        <Link to="/" className="auth-back">← Back</Link>
+        <span className="auth-logo">🏏</span>
+        <h1 className="auth-title">Create a Room</h1>
+        <p className="auth-subtitle">
+          You&apos;ll be the host. Share the code once you&apos;re in.
+        </p>
+        <form className="auth-form" onSubmit={handleSubmit}>
+          <label className="auth-field">
+            <span className="auth-label">Your name</span>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => {
+                setName(e.target.value);
+                setError('');
+              }}
+              placeholder="e.g. Ravi"
+              maxLength={24}
+              required
+              disabled={isSubmitting}
+            />
+          </label>
+          {error && <p className="auth-error">{error}</p>}
+          <button className="auth-submit" type="submit" disabled={isSubmitting}>
+            {isSubmitting ? 'Creating Room…' : 'Create Room'}
+          </button>
+        </form>
+        <p className="auth-switch">
+          Have a code already? <Link to="/joinroom">Join a room</Link>
+        </p>
+      </div>
     </div>
   );
 };
