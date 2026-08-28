@@ -8,13 +8,29 @@ The interesting part is not the CRUD — it is that N browsers must agree on a
 single price, a single clock, and a single winner, while people click the same
 button at the same moment and drop off the WiFi mid-lot.
 
-## Demo
+## Screens
 
-<!-- Record two browser windows side by side: create + join, start, a contested
-     bid, a SOLD, a refresh mid-lot showing the pause/resume, then the results
-     screen. Drop the file in docs/demo.mp4 and it renders inline on GitHub. -->
+![Landing page](docs/img1.jpeg)
 
-_Demo video: `docs/demo.mp4`_
+Create a room and you are the host; everyone else joins with the six-character
+code you share.
+
+| Create | Join |
+|---|---|
+| ![Create a room](docs/img2.jpeg) | ![Join a room](docs/img3.jpeg) |
+
+The auction itself is one fixed, non-scrolling screen: the full player ledger on
+the left, the player on the block in the middle, managers and your own squad on
+the right. Every client renders the same countdown from the same server
+deadline.
+
+![The live auction](docs/img4.jpeg)
+
+When the clock runs out the lot settles — the ledger strikes the player off, the
+winner's purse is debited, and the stamp reads **You won** in gold for whoever
+took them.
+
+![A settled lot](docs/img5.jpeg)
 
 ## Run it locally
 
@@ -85,7 +101,7 @@ below.
 
 ## Concurrency: what happens when everyone clicks BID at once
 
-Four layers, in the order they matter.
+Five layers, in the order they matter.
 
 **1. Node's event loop is the mutex.** Socket.IO dispatches messages to
 handlers that run on a single thread, so two `bid:place` messages arriving "at
@@ -100,21 +116,34 @@ is silently lost. Keeping the database off the bid path is what keeps the
 critical section atomic. See [`server/services/bidService.js`](server/services/bidService.js).
 
 **2. The client sends an intent, never an amount.** `bid:place` carries no
-price. The server computes `nextBid` from its own state and takes the bidder
-from `socket.data.userId`, bound at join. This removes stale-price bids,
-tampered payloads, and any disagreement about the increment in one move.
+price to bid — only `lotIndex` and `expectedBid`, the price the bidder had on
+screen. The server computes `nextBid` from its own state and takes the bidder
+from `socket.data.userId`, bound at join. A tampered `expectedBid` can only get
+your own bid rejected, never change what you pay.
 
 **3. A monotonic `version` orders every broadcast.** Clients ignore anything at
 or below the version they hold, and a gap means they missed an event, so they
 pull a fresh snapshot. Self-healing rather than silently wrong.
 
-**4. The race resolves correctly on its own.** A and B click simultaneously.
-The server processes A (price → ₹1.20 Cr, highest = A), then B, who bids
-₹1.40 Cr. That is correct auction behaviour, not a bug — B wanted to outbid and
-the price moved. Nothing is lost or double-counted.
+**4. The loser of a race is told, not silently re-priced.** A and B both click
+BID at ₹8.00 Cr. The event loop serialises them, so A's bid lands and the price
+becomes ₹8.50 Cr. B's message then arrives carrying `expectedBid: 8.00 Cr`,
+which no longer matches the server's price — so B is rejected:
 
-The one rule that must be enforced is that the standing highest bidder cannot
-outbid themselves:
+> Too slow — someone else bid first. The price is now ₹8.50 Cr.
+
+The alternative is to let B through at ₹9.00 Cr. That is defensible auction
+behaviour, but it commits B to a price they never saw and never agreed to.
+This is **optimistic concurrency** — a compare-and-swap on the price the client
+last rendered — and it is the difference between "your bid was serialised" and
+"your bid was reinterpreted". B sees the new price and clicks again if they
+still want the player.
+
+The check is skipped when `expectedBid` is absent, which is how the headless
+test clients still exercise the raw uncontrolled race.
+
+**5. The standing highest bidder cannot outbid themselves.** This holds no
+matter how the race resolves:
 
 ```js
 if (lot.highestBidderId === socket.data.userId) return reject('ALREADY_HIGHEST');
@@ -192,7 +221,7 @@ never the payload.
 |---|---|---|
 | `room:join` | `{ roomCode, userId?, userName }` | join or reconnect; acks with a full snapshot |
 | `room:sync` | `{}` | pull a snapshot after a version gap |
-| `bid:place` | `{ lotIndex }` | **no amount** |
+| `bid:place` | `{ lotIndex, expectedBid }` | **no amount to bid**; `expectedBid` is the price the client last saw |
 | `auction:start` | `{}` | admin |
 | `auction:next` | `{}` | admin |
 | `auction:resume` | `{ dropUserIds? }` | admin |
@@ -206,7 +235,7 @@ Server → client. Every event carries `version`.
 | `room:participants` | `{ participants }` |
 | `auction:lot` | `{ lotIndex, player, endsAt, status }` |
 | `bid:update` | `{ amount, nextBid, bidderId, bidderName, endsAt }` |
-| `bid:rejected` | `{ code, message }` — sender only |
+| `bid:rejected` | `{ code, message }` — sender only. `OUTBID`, `ALREADY_HIGHEST`, `INSUFFICIENT_PURSE`, `LOT_CLOSED`, `STALE` |
 | `auction:settled` | `{ status, player, soldPrice, winnerName, participants }` |
 | `auction:paused` | `{ reason, waitingFor, remainingMs }` |
 | `auction:resumed` | `{ endsAt }` |
