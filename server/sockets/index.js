@@ -47,6 +47,35 @@ export function registerSocketHandlers(io) {
         }
 
         const existing = userId && room.participants.get(userId);
+
+        // A finished auction never blocks on FULL/LIVE. People who were in the
+        // room get seated again so they see their results; anyone else is a
+        // spectator who is just told it is over (and is NOT seated).
+        if (room.phase === 'ENDED') {
+          const id = userId || randomUUID();
+          if (existing) {
+            const participant = room.addParticipant(id, userName || 'Anonymous');
+            participant.socketId = socket.id;
+            registry.cancelEviction(code);
+            socket.data.userId = id;
+            socket.data.roomCode = code;
+            socket.join(code);
+            const state = room.snapshot(id);
+            state.results = buildResults(room);
+            respond(ack, { ok: true, userId: id, state });
+            io.to(code).emit('room:participants', {
+              version: room.version,
+              participants: participantsPayload(room),
+            });
+            return;
+          }
+          return respond(ack, {
+            ok: true,
+            userId: id,
+            state: { ...room.snapshot(id), spectator: true, results: null },
+          });
+        }
+
         if (!existing && room.activeParticipants().length >= room.maxParticipants) {
           return respond(ack, { ok: false, code: 'ROOM_FULL' });
         }
@@ -88,7 +117,9 @@ export function registerSocketHandlers(io) {
     socket.on('room:sync', (_payload, ack) => {
       const room = currentRoom(socket);
       if (!room) return respond(ack, { ok: false, code: 'NOT_IN_ROOM' });
-      respond(ack, { ok: true, state: room.snapshot(socket.data.userId) });
+      const state = room.snapshot(socket.data.userId);
+      if (room.phase === 'ENDED') state.results = buildResults(room);
+      respond(ack, { ok: true, state });
     });
 
     socket.on('bid:place', ({ lotIndex } = {}) => {

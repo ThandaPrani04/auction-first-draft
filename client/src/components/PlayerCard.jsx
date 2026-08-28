@@ -9,7 +9,7 @@ import { formatCr, nextBid } from '../lib/bidRules.js';
  * positioned stamp INSIDE the card rather than the old fullscreen overlay,
  * which both shifted the page and covered the controls.
  */
-export default function PlayerCard({ player, lot, settlement }) {
+export default function PlayerCard({ player, lot, settlement, isAdmin, me }) {
   const currentBid = lot?.currentBid ?? null;
   const settled = lot?.status === 'SETTLED' && settlement;
 
@@ -18,11 +18,14 @@ export default function PlayerCard({ player, lot, settlement }) {
       <section className="panel stage-card is-empty">
         <div className="stage-empty">
           <h2>Waiting to start</h2>
-          <p>The room creator opens the first lot.</p>
+          <p>{isAdmin ? 'Press Start Auction to open the first lot.' : 'The host opens the first lot.'}</p>
         </div>
       </section>
     );
   }
+
+  // Personalise the SOLD result for the viewer: did you win this player?
+  const iWon = settled && settlement.status === 'SOLD' && !!me && settlement.winnerUserId === me.userId;
 
   return (
     <section className={`panel stage-card${settled ? ' is-settled' : ''}`}>
@@ -70,11 +73,11 @@ export default function PlayerCard({ player, lot, settlement }) {
       </div>
 
       {settled && (
-        <div className={`stamp stamp--${settlement.status.toLowerCase()}`}>
+        <div className={`stamp stamp--${settlement.status.toLowerCase()}${iWon ? ' stamp--mine' : ''}`}>
           <span className="stamp-word">{settlement.status}</span>
           {settlement.status === 'SOLD' && (
             <span className="stamp-detail">
-              {settlement.winnerName} · {formatCr(settlement.soldPrice)}
+              {iWon ? 'You won' : settlement.winnerName} · {formatCr(settlement.soldPrice)}
             </span>
           )}
         </div>

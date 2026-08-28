@@ -39,6 +39,7 @@ const initialState = {
   /** Every lot decided so far — drives the ledger's strikethroughs. */
   settled: [],
   results: null,
+  spectator: false, // joined an already-finished room without ever being in it
   notice: null, // transient message (a rejected bid, an error)
 };
 
@@ -82,6 +83,9 @@ function reducer(state, action) {
         waitingFor: s.waitingFor,
         settlement: state.settlement,
         settled: s.settled ?? state.settled,
+        // Present only when joining/refreshing an already-ENDED room.
+        results: s.results ?? state.results,
+        spectator: s.spectator ?? false,
       };
     }
 
@@ -167,6 +171,7 @@ function reducer(state, action) {
           status: action.status,
           soldPrice: action.soldPrice,
           winnerName: action.winnerName,
+          winnerUserId: action.winnerUserId,
           isLastLot: action.isLastLot,
         },
         // Append unless this lot is already recorded, so a re-sync followed by

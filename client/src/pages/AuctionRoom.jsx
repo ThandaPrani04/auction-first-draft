@@ -14,6 +14,7 @@ import ParticipantList from '../components/ParticipantList.jsx';
 import MyTeam from '../components/MyTeam.jsx';
 import PausedOverlay from '../components/PausedOverlay.jsx';
 import ResultsScreen from '../components/ResultsScreen.jsx';
+import ThemeToggle from '../components/ThemeToggle.jsx';
 
 import '../styles/auction.css';
 
@@ -79,7 +80,15 @@ export default function AuctionRoom() {
   if (state.phase === 'ENDED') {
     return (
       <div className="auction-app auction-app--results">
-        <ResultsScreen results={state.results} roomCode={state.roomCode} />
+        <ResultsScreen
+          results={state.results}
+          roomCode={state.roomCode}
+          spectator={state.spectator}
+          onExit={() => {
+            clearRoom();
+            navigate('/');
+          }}
+        />
       </div>
     );
   }
@@ -104,6 +113,7 @@ export default function AuctionRoom() {
         <div className="topbar-right">
           <span className="topbar-user">{state.me?.name}</span>
           <span className="topbar-purse">{formatCr(state.me?.purse)}</span>
+          <ThemeToggle className="theme-toggle--sm" />
         </div>
       </header>
 
@@ -114,7 +124,13 @@ export default function AuctionRoom() {
       />
 
       <main className="stage">
-        <PlayerCard player={state.player} lot={state.lot} settlement={state.settlement} />
+        <PlayerCard
+          player={state.player}
+          lot={state.lot}
+          settlement={state.settlement}
+          isAdmin={state.isAdmin}
+          me={state.me}
+        />
         <TimerRing endsAt={state.lot?.endsAt} status={state.lot?.status} />
         <BidPanel state={state} actions={actions} />
       </main>

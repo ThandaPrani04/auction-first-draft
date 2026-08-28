@@ -307,6 +307,23 @@ export async function load(roomCode) {
     });
   }
 
+  // For a finished auction, rebuild the settled ledger from the durable lots so
+  // the results screen is complete (unsold pool and sold count) even when the
+  // live room was evicted or the server restarted. Not done for LOBBY/LIVE
+  // rehydration, which deliberately reopens empty.
+  if (room.phase === 'ENDED') {
+    const nameOf = new Map((doc.participants ?? []).map((p) => [p.userId, p.name]));
+    room.settled = (doc.lots ?? []).map((l) => ({
+      index: l.index,
+      player: publicPlayer(byId.get(String(l.playerId))),
+      status: l.status,
+      soldPrice: l.soldPrice,
+      winnerUserId: l.winnerUserId,
+      winnerName: l.winnerUserId ? nameOf.get(l.winnerUserId) ?? null : null,
+    }));
+    room.lotIndex = room.settled.reduce((max, s) => Math.max(max, s.index), -1);
+  }
+
   rooms.set(roomCode, room);
   return room;
 }

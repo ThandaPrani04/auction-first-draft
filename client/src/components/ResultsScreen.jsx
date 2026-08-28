@@ -2,15 +2,26 @@ import { useState } from 'react';
 import { formatCr } from '../lib/bidRules.js';
 
 /** Post-auction summary: every squad, spend, and the unsold pool. */
-export default function ResultsScreen({ results, roomCode }) {
+export default function ResultsScreen({ results, roomCode, spectator = false, onExit }) {
   const [selected, setSelected] = useState(null);
   const [viewingUnsold, setViewingUnsold] = useState(false);
 
+  // No results to show: either a spectator who was never in this room, or a
+  // room whose results are no longer available. Never hang on "Loading…".
   if (!results) {
     return (
       <div className="results">
         <h1>Auction complete</h1>
-        <p className="results-sub">Loading results…</p>
+        <p className="results-sub">
+          {spectator
+            ? `Room ${roomCode}'s auction has already finished — you weren't part of it.`
+            : 'This auction has finished. Its results are no longer available.'}
+        </p>
+        {onExit && (
+          <button className="btn btn--ghost results-back" onClick={onExit}>
+            Back to home
+          </button>
+        )}
       </div>
     );
   }
