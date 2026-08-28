@@ -1,23 +1,131 @@
 /* App.css */
 
-/* Color Theme Variables */
+/* ==========================================================================
+   Theme tokens. `data-theme` on <html> (set from lib/theme.js) flips these.
+   Default (no attribute) and [data-theme="dark"] are dark; [data-theme="light"]
+   is the bright variant. Home.css and Auth.css consume these tokens, so both
+   modes come for free once colours are referenced through them.
+   ========================================================================== */
+:root,
+:root[data-theme='dark'] {
+  --page-bg:
+    radial-gradient(1100px 600px at 15% -10%, rgba(46, 204, 113, 0.16), transparent 60%),
+    radial-gradient(900px 600px at 100% 0%, rgba(241, 196, 15, 0.10), transparent 55%),
+    linear-gradient(160deg, #0b1220 0%, #0e1a2b 55%, #0a1522 100%);
+  --page-solid: #0b1220;
+
+  --card-bg: rgba(20, 30, 45, 0.72);
+  --card-border: rgba(255, 255, 255, 0.10);
+  --card-shadow: 0 24px 60px rgba(0, 0, 0, 0.50);
+
+  --surface: rgba(255, 255, 255, 0.04);
+  --surface-border: rgba(255, 255, 255, 0.08);
+  --surface-hover: rgba(255, 255, 255, 0.06);
+
+  --field-bg: rgba(255, 255, 255, 0.05);
+  --field-border: rgba(255, 255, 255, 0.14);
+
+  --text: #e8eef5;
+  --text-strong: #f6f9fc;
+  --muted: #9fb0c1;
+
+  --accent: #2ecc71;
+  --accent-2: #27ae60;
+  --accent-ink: #06210f;
+  --gold: #f1c40f;
+  --danger: #e74c3c;
+  --danger-soft: #ffb4a8;
+
+  --toggle-bg: rgba(255, 255, 255, 0.06);
+  --toggle-border: rgba(255, 255, 255, 0.16);
+}
+
+:root[data-theme='light'] {
+  --page-bg:
+    radial-gradient(1100px 600px at 15% -10%, rgba(46, 204, 113, 0.18), transparent 60%),
+    radial-gradient(900px 600px at 100% 0%, rgba(241, 196, 15, 0.20), transparent 55%),
+    linear-gradient(160deg, #eef4fb 0%, #e6f3ec 55%, #f4f8fc 100%);
+  --page-solid: #eef4fb;
+
+  --card-bg: rgba(255, 255, 255, 0.86);
+  --card-border: rgba(20, 40, 70, 0.10);
+  --card-shadow: 0 22px 48px rgba(30, 55, 90, 0.16);
+
+  --surface: #ffffff;
+  --surface-border: #e3eaf1;
+  --surface-hover: #f4f8fc;
+
+  --field-bg: #ffffff;
+  --field-border: #cfdae6;
+
+  --text: #2a3644;
+  --text-strong: #14202d;
+  --muted: #5d6d7e;
+
+  --accent: #22a35b;
+  --accent-2: #1e8f4f;
+  --accent-ink: #ffffff;
+  --gold: #d4a005;
+  --danger: #d64535;
+  --danger-soft: #b23a2c;
+
+  --toggle-bg: rgba(20, 40, 70, 0.06);
+  --toggle-border: rgba(20, 40, 70, 0.14);
+}
+
+/* Legacy aliases still referenced by the old .auction-container styles below. */
 :root {
-  --primary-color: #2ecc40;      /* Green */
-  --secondary-color: #27ae60;    /* Darker Green */
-  --accent-color: #145a32;       /* Even Darker Green */
-  --background-color: #eafaf1;   /* Light Green background */
-  --text-color: #145a32;         /* Dark Green text */
+  --primary-color: #2ecc40;
+  --secondary-color: #27ae60;
+  --accent-color: #145a32;
+  --background-color: #eafaf1;
+  --text-color: #145a32;
   --button-color: #2ecc40;
   --button-hover: #27ae60;
 }
 
 /* General Styles */
 body {
-  font-family: 'Arial', sans-serif;
-  background-color: var(--background-color);
+  font-family: 'Inter', 'Segoe UI', system-ui, Arial, sans-serif;
+  background-color: var(--page-solid);
   margin: 0;
   padding: 0;
-  color: var(--text-color);
+  color: var(--text);
+}
+
+/* --- Theme toggle (shared across all pages) ----------------------------- */
+.theme-toggle {
+  margin: 0;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  font-size: 1.05rem;
+  line-height: 1;
+  border-radius: 50%;
+  cursor: pointer;
+  background: var(--toggle-bg);
+  border: 1px solid var(--toggle-border);
+  transition: transform 0.18s ease, background 0.18s ease;
+}
+.theme-toggle:hover {
+  transform: translateY(-1px) rotate(12deg);
+  background: var(--toggle-bg);
+}
+/* Floating placement used on the landing and auth pages. */
+.theme-toggle--float {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  z-index: 50;
+}
+/* Compact variant that sits inside the auction top bar. */
+.theme-toggle--sm {
+  width: 32px;
+  height: 32px;
+  font-size: 0.9rem;
 }
 
 h1 {
@@ -55,12 +163,16 @@ button:disabled {
   cursor: not-allowed;
 }
 
-/* Container */
-div {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin: 20px;
+/* NOTE: there used to be a blanket `div { display:flex; flex-direction:column;
+   align-items:center; margin:20px }` here. It was a disaster — a 0,0,1 element
+   rule that every layout had to fight, and which quietly beat the auction's
+   0,0,0 `:where()` reset, so the auction room laid out with stray flexing,
+   centring and 20px margins on every unclassed div (the "border" and the
+   panels-with-no-background). Every page now sets its own display explicitly,
+   so the rule is gone. Keep `#root` neutral. */
+#root {
+  margin: 0;
+  width: 100%;
 }
 
 /* Table Styles */
